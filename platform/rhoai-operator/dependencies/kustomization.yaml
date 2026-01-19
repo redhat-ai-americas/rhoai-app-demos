@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - nfd-operator
+  - kueue-operator
+  # Optional: Uncomment for NVIDIA GPU support/monitoring
+  # - nvidia-dcgm-operator
