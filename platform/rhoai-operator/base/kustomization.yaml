@@ -6,6 +6,10 @@ resources:
   - operatorgroup.yaml
   - subscription.yaml
 
+# Add sync wave annotation to ensure operator installs before DataScienceCluster
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "1"
+
 # Parameterize the subscription channel
 # Edit this value to change the RHOAI subscription channel
 patches:

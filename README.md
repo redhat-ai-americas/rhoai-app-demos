@@ -1,5 +1,7 @@
 # RHOAI Application Demos
 
+## WORK-IN-PROGRESS - THIS REPO IS STILL BEING DEVELOPED AND IS NOT COMPLETE
+
 This is a modular, GitOps-enabled repository for deploying and demonstrating Red Hat OpenShift AI (RHOAI) with various AI applications.
 
 The value of AI is seen most easily through the use of AI applications that users can interact with, and there are a number of really good out-of-the-box, production-ready, AI applications. 

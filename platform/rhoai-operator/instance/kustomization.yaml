@@ -3,3 +3,7 @@ kind: Kustomization
 
 resources:
   - datasciencecluster.yaml
+
+# Add sync wave annotation to ensure DataScienceCluster is applied after operator is ready
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "2"
