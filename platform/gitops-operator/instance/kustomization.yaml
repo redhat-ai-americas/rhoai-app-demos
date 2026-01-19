@@ -5,3 +5,4 @@ namespace: openshift-gitops
 
 resources:
   - argocd.yaml
+  - clusterrolebinding.yaml

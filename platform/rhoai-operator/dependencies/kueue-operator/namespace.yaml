@@ -1,7 +1,8 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: openshift-kueue
+  annotations:
+    openshift.io/display-name: "Kueue Operator"
   labels:
-    name: openshift-kueue
-    openshift.io/cluster-monitoring: "true"
+    openshift.io/cluster-monitoring: 'true'
+  name: openshift-kueue-operator
