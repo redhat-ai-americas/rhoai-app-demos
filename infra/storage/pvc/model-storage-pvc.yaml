@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage
+  namespace: rhoai-models
+  labels:
+    app.kubernetes.io/name: model-storage
+    app.kubernetes.io/part-of: rhoai-demos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  # Uncomment and specify if you need a specific storage class
+  # storageClassName: gp3-csi

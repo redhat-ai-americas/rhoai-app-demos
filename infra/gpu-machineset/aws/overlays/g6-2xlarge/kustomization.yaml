@@ -1,0 +1,73 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openshift-machine-api
+
+resources:
+  - ../../../base
+
+patches:
+  - target:
+      kind: MachineSet
+    patch: |-
+      apiVersion: machine.openshift.io/v1beta1
+      kind: MachineSet
+      metadata:
+        name: WILL_BE_REPLACED
+      spec:
+        replicas: 1
+        template:
+          spec:
+            providerSpec:
+              value:
+                kind: AWSMachineProviderConfig
+                apiVersion: machine.openshift.io/v1beta1
+                instanceType: g6.2xlarge
+                ami:
+                  id: ""  # Will use latest RHCOS AMI
+                blockDevices:
+                  - ebs:
+                      volumeSize: 120
+                      volumeType: gp3
+                      iops: 3000
+                deviceName: /dev/sda1
+                placement:
+                  availabilityZone: us-east-1a
+                  region: us-east-1
+                securityGroups:
+                  - filters:
+                      - name: tag:Name
+                        values:
+                          - "*-worker-sg"
+                subnet:
+                  filters:
+                    - name: tag:Name
+                      values:
+                        - "*-private-us-east-1a"
+                iamInstanceProfile:
+                  id: ""  # Will be auto-detected
+                tags:
+                  - name: kubernetes.io/cluster/CLUSTER_ID
+                    value: owned
+                  - name: gpu-node
+                    value: "true"
+                userDataSecret:
+                  name: worker-user-data
+
+replacements:
+  # These will be extracted from existing machinesets in the cluster
+  - source:
+      kind: ConfigMap
+      name: cluster-info
+      fieldPath: data.clusterName
+    targets:
+      - select:
+          kind: MachineSet
+        fieldPaths:
+          - metadata.name
+          - metadata.labels.[machine.openshift.io/cluster-api-cluster]
+          - spec.selector.matchLabels.[machine.openshift.io/cluster-api-cluster]
+          - spec.template.metadata.labels.[machine.openshift.io/cluster-api-cluster]
+        options:
+          delimiter: "-"
+          index: 0

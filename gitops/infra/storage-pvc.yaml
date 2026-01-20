@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: storage-pvc
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: storage-pvc
+    app.kubernetes.io/part-of: rhoai-demos
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-ai-americas/rhoai-app-demos.git
+    targetRevision: main
+    path: infra/storage/pvc
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
