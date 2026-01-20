@@ -148,10 +148,10 @@ Quick examples for common customizations. See component READMEs for details.
 
 ```bash
 # Edit parameters for your cloud provider
-vim infra/gpu-machineset/aws/overlays/g5-xlarge/params.yaml
+vim infra/gpu-machineset/aws/overlays/g6-2xlarge/params.yaml
 
 # Then apply via GitOps
-oc apply -f gitops/infra/gpu-machineset-aws-g5.yaml
+oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
 ```
 
 ### Storage Options
@@ -167,6 +167,9 @@ oc apply -f gitops/infra/storage-minio.yaml
 ### Model Selection
 
 ```bash
+# Qwen3-VL 8B (multimodal)
+oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
+
 # Granite 7B
 oc apply -f gitops/platform/models/granite-7b-pvc.yaml
 

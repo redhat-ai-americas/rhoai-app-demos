@@ -22,15 +22,15 @@ Quick reference for available demos, their prerequisites, and getting started.
 **Difficulty**: Intermediate
 
 **Prerequisites**:
-- OpenShift 4.19+ with cluster-admin access
-- 1x GPU node (AWS g5.xlarge or Azure NC6s_v3)
+- OpenShift 4.16+ with cluster-admin access
+- 1x GPU node (AWS g6.2xlarge or Azure NC6s_v3)
 - 100Gi+ storage
-- HuggingFace token (optional for Granite, required for Llama)
+- HuggingFace token (required for gated models)
 
 **Components**:
 - RHOAI operator and DataScienceCluster
 - GPU-enabled node
-- Granite 7B LLM (or Llama 3 8B)
+- Qwen3-VL 8B multimodal model (or Granite 7B, Llama 3 8B)
 - AnythingLLM + ChromaDB
 - PVC or MinIO storage
 
@@ -62,7 +62,7 @@ Quick reference for available demos, their prerequisites, and getting started.
 ### Common Requirements for All Demos
 
 **Cluster**:
-- OpenShift 4.19 or later
+- OpenShift 4.16 or later
 - Cluster-admin access
 - Sufficient quota for GPU instances and storage
 
@@ -72,7 +72,7 @@ oc version  # OpenShift CLI
 ```
 
 **Cloud Provider Access** (for GPU demos):
-- AWS: Ability to create g5.xlarge instances
+- AWS: Ability to create g6.2xlarge or g6.4xlarge instances
 - Azure: Ability to create Standard_NC6s_v3 VMs
 - Appropriate quotas and service limits
 
@@ -84,7 +84,7 @@ oc version  # OpenShift CLI
 ### Demo-Specific Requirements
 
 Check each demo's README for specific prerequisites. For example, the AnythingLLM demo requires:
-- 1x GPU node (g5.xlarge or NC6s_v3)
+- 1x GPU node (g6.2xlarge or NC6s_v3)
 - 100Gi+ storage for model
 - 8+ CPU cores, 32Gi+ RAM for model serving
 
@@ -253,7 +253,7 @@ oc get route <route-name> -n <namespace> -o yaml | grep -A5 status
 oc scale machineset <machineset-name> --replicas=0 -n openshift-machine-api
 ```
 
-**Use smaller instances**: g5.xlarge (~$1/hr) for demos vs larger instances for production
+**Choose right instance size**: g6.2xlarge (~$1.10/hr) recommended for most workloads, g6.4xlarge (~$2.15/hr) for large models
 
 **Monitor usage**: Set up billing alerts and use cluster autoscaler
 
