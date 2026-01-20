@@ -59,17 +59,14 @@ Quick reference for available demos, their prerequisites, and getting started.
 
 ## Prerequisites
 
-### Common Requirements for All Demos
+### Platform Prerequisites
 
-**Cluster**:
-- OpenShift 4.16 or later
-- Cluster-admin access
-- Sufficient quota for GPU instances and storage
+All demos require:
+- **OpenShift 4.16+** with cluster-admin access (see [main README](README.md#prerequisites) for full requirements)
+- **OpenShift GitOps** installed (see [Getting Started](#getting-started))
+- **RHOAI** installed (see [Getting Started](#getting-started))
 
-**Client Tools**:
-```bash
-oc version  # OpenShift CLI
-```
+### Demo-Specific Requirements
 
 **Cloud Provider Access** (for GPU demos):
 - AWS: Ability to create g6.2xlarge or g6.4xlarge instances
@@ -81,9 +78,7 @@ oc version  # OpenShift CLI
 - Generate access token with read permissions
 - Accept license agreements for gated models (e.g., Llama)
 
-### Demo-Specific Requirements
-
-Check each demo's README for specific prerequisites. For example, the AnythingLLM demo requires:
+Check each demo's README for detailed prerequisites. For example, the AnythingLLM demo requires:
 - 1x GPU node (g6.2xlarge or NC6s_v3)
 - 100Gi+ storage for model
 - 8+ CPU cores, 32Gi+ RAM for model serving
@@ -91,61 +86,37 @@ Check each demo's README for specific prerequisites. For example, the AnythingLL
 
 ## Getting Started
 
-All demos require OpenShift GitOps and RHOAI as a foundation. Install these first:
+All demos require OpenShift GitOps and RHOAI as a foundation. 
 
-### Step 1: Install OpenShift GitOps
+### Prerequisites Setup
 
+**Before starting any demo**, complete the platform setup in the main [README.md](README.md):
+
+1. **[Install OpenShift GitOps](README.md#1-install-openshift-gitops)** - Required for GitOps-based deployment (~3-4 minutes)
+2. **[Install RHOAI](README.md#2-install-rhoai)** - Required for model serving (~5-10 minutes)
+
+**Verify prerequisites are ready:**
 ```bash
-# Step 1a: Install the operator subscription
-oc apply -k platform/gitops-operator/base/
+# Check GitOps is running
+oc get pods -n openshift-gitops
 
-# Wait for the operator to install (1-2 minutes)
-oc wait --for=condition=Available deployment/openshift-gitops-operator-controller-manager \
-  -n openshift-operators --timeout=300s
-
-# Step 1b: Create the ArgoCD instance
-oc apply -k platform/gitops-operator/instance/
-
-# Wait for ArgoCD server to be ready (1-2 minutes)
-oc wait --for=condition=Ready pod \
-  -l app.kubernetes.io/name=openshift-gitops-server \
-  -n openshift-gitops --timeout=300s
-```
-
-**Access ArgoCD UI** (optional):
-```bash
-ARGOCD_URL=$(oc get route openshift-gitops-server \
-  -n openshift-gitops -o jsonpath='{.spec.host}')
-ARGOCD_PASSWORD=$(oc get secret openshift-gitops-cluster \
-  -n openshift-gitops -o jsonpath='{.data.admin\.password}' | base64 -d)
-
-echo "ArgoCD UI: https://${ARGOCD_URL}"
-echo "Username: admin"
-echo "Password: ${ARGOCD_PASSWORD}"
-```
-
-### Step 2: Install RHOAI
-
-```bash
-oc apply -f gitops/platform/rhoai-operator.yaml
-
-# Wait for operator (5-10 minutes)
-oc wait --for=condition=Ready pod \
-  -l name=rhods-operator \
-  -n redhat-ods-operator --timeout=600s
-
-# Verify DataScienceCluster
+# Check RHOAI is ready
 oc get datasciencecluster -A
 ```
 
-### Step 3: Follow a Demo Guide
+Both should show Running/Ready status before proceeding.
 
-Choose a demo from [Available Demos](#available-demos) and follow its detailed README for:
-- GPU deployment
-- Storage setup
-- Model downloads
-- Application configuration
-- Demo walkthrough
+### Choose and Run a Demo
+
+Once prerequisites are complete:
+
+1. Choose a demo from [Available Demos](#available-demos)
+2. Follow its detailed README for:
+   - GPU deployment
+   - Storage setup
+   - Model downloads
+   - Application configuration
+   - Demo walkthrough
 
 **Example**: [AnythingLLM RAG Demo →](demos/anythingllm-rag-demo/README.md)
 

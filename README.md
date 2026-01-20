@@ -41,8 +41,6 @@ Get started in 3 steps:
 
 **Important**: The GitOps operator must be installed directly (not via ArgoCD) since ArgoCD doesn't exist yet.
 
-The installation requires two steps to avoid timing issues:
-
 ```bash
 # Step 1: Install the operator subscription
 oc apply -k platform/gitops-operator/base/
