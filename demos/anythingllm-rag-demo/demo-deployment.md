@@ -4,115 +4,46 @@ Simple step-by-step instructions to deploy the AnythingLLM RAG demo.
 
 ## Prerequisites
 
-Before starting, ensure you have completed:
-- OpenShift GitOps installation (see main README)
-- RHOAI Operator installation (see main README)
-- GPU Machineset installation (see main README)
+Before starting, ensure you have completed the main README steps:
+- [Step 1: Install OpenShift GitOps](../../README.md#1-install-openshift-gitops)
+- [Step 2: Install RHOAI](../../README.md#2-install-rhoai)
+- [Step 3: Deploy GPU Nodes](../../README.md#3-deploy-gpu-nodes-aws)
+- [Step 4: Download and Deploy Models](../../README.md#4-download-and-deploy-models)
 
 Verify:
 ```bash
 oc get pods -n openshift-gitops
 oc get datasciencecluster -A
+oc get nodes -l nvidia.com/gpu.present=true
+oc get inferenceservice -n model-downloads
 ```
 
 ## Deployment Steps
 
-### 1. Deploy GPU Node (5-10 min)
+### 1. Deploy GPU Node and Model
 
-**⚠️ GPU nodes are required for this demo.**
+**Prerequisites:**
+- GPU node deployed (see [README - Step 3](../../README.md#3-deploy-gpu-nodes-aws))
+- Model downloaded and serving (see [README - Step 4](../../README.md#4-download-and-deploy-models))
 
-This demo requires a GPU node for model inference. Follow the GPU deployment instructions in the [main README - Step 3: Deploy GPU Nodes (AWS)](../../README.md#3-deploy-gpu-nodes-aws).
+**Required model:** Qwen3-VL 8B (recommended) or any compatible model
 
-**✓ Verify:** GPU node shows `Ready` status:
+**✓ Verify prerequisites:**
 
 ```bash
+# GPU node is Ready
 oc get nodes -l nvidia.com/gpu.present=true
-```
 
----
-
-### 2. Download Model (10-30 min)
-
-
-
-```bash
-# Create HuggingFace token secret
-read -sp "Enter HuggingFace token: " HF_TOKEN
-echo
-
-oc create namespace model-downloads --dry-run=client -o yaml | oc apply -f -
-oc create secret generic huggingface-token \
-  --from-literal=token=${HF_TOKEN} \
-  -n model-downloads
-
-# Deploy model download via ArgoCD
-oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
-
-# Wait for ArgoCD application to be ready
-oc wait --for=condition=Ready application/model-qwen3-vl-8b-pvc \
-  -n openshift-gitops --timeout=180s
-
-# Monitor the download job progress
-oc logs -f job/download-qwen3-vl-8b -n model-downloads
-
-# Verify PVC was created and is bound
+# Model PVC is Bound
 oc get pvc -n model-downloads
-```
 
-**✓ Verify:** 
-- Job shows `COMPLETIONS: 1/1`
-- PVC `qwen3-vl-8b-model-storage` shows `Bound` status
-
-
----
-
-### 3. Deploy Model Serving (3-5 min)
-
-Deploy the InferenceService in the `model-downloads` namespace (same as the PVC):
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: serving.kserve.io/v1beta1
-kind: InferenceService
-metadata:
-  name: qwen3-vl-8b
-  namespace: model-downloads
-spec:
-  predictor:
-    model:
-      modelFormat:
-        name: pytorch
-      runtime: vllm-runtime
-      storageUri: pvc://qwen3-vl-8b-model-storage/Qwen3-VL-8B-Instruct
-      resources:
-        limits:
-          nvidia.com/gpu: "1"
-        requests:
-          nvidia.com/gpu: "1"
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-EOF
-
-# Wait for model to be ready
-oc wait --for=condition=Ready inferenceservice/qwen3-vl-8b \
-  -n model-downloads --timeout=600s
-```
-
-**✓ Verify:** InferenceService shows `READY=True`
-
-**Test the model:**
-```bash
-oc run curl-test --image=curlimages/curl -it --rm -n model-downloads -- \
-  curl -X POST http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "Qwen3-VL-8B-Instruct", "prompt": "Hello", "max_tokens": 50}'
+# InferenceService is Ready
+oc get inferenceservice -n model-downloads
 ```
 
 ---
 
-### 4. Configure AnythingLLM
+### 2. Configure AnythingLLM
 
 Update the AnythingLLM configuration to point to the model:
 
@@ -134,7 +65,7 @@ embedding:
 
 ---
 
-### 5. Deploy AnythingLLM (2-3 min)
+### 3. Deploy AnythingLLM (2-3 min)
 
 ```bash
 oc apply -f gitops/apps/anythingllm.yaml
@@ -155,68 +86,54 @@ oc get route anythingllm -n anythingllm -o jsonpath='https://{.spec.host}{"\n"}'
 ## Quick Verification
 
 ```bash
-# Check all components
-oc get nodes -l nvidia.com/gpu.present=true
-oc get pvc -n model-downloads
-oc get inferenceservice -n model-downloads
+# Check AnythingLLM deployment
 oc get pods -n anythingllm
+oc get route anythingllm -n anythingllm
 
-# All should be Running/Ready
+# Test model connectivity from AnythingLLM
+oc exec -it deploy/anythingllm -n anythingllm -- \
+  curl http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/models
 ```
 
 ## Time Estimate
 
 | Step | Time | Notes |
 |------|------|-------|
-| GPU Node | 5-10 min | Cloud provider provisioning |
-| Model Download | 10-30 min | Depends on network speed (includes PVC creation) |
-| Model Serving | 3-5 min | Model loading time |
-| Configure | < 1 min | Quick file edit |
-| AnythingLLM | 2-3 min | Container startup |
+| Prerequisites | 20-45 min | GPU node + model (see main README) |
+| Configure AnythingLLM | < 1 min | Quick file edit |
+| Deploy AnythingLLM | 2-3 min | Container startup |
 
-**Total: ~25-45 minutes** (mostly model download time)
+**Total: ~3-5 minutes** (with prerequisites already complete)
+
+**Total from scratch: ~25-50 minutes** (including all prerequisites)
 
 ## Cleanup
 
-Remove all demo components:
+Remove AnythingLLM:
 
 ```bash
-# Delete in reverse order
 oc delete -f gitops/apps/anythingllm.yaml
-oc delete inferenceservice qwen3-vl-8b -n model-downloads
-oc delete -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
-oc delete -f gitops/infra/gpu-machineset-aws-g6.yaml
-
-# Delete namespaces
-oc delete project anythingllm model-downloads
+oc delete project anythingllm
 ```
+
+To clean up GPU node and model resources, see the main [README](../../README.md).
 
 ## Troubleshooting
 
-**GPU node not appearing:**
-```bash
-oc get machine -n openshift-machine-api
-oc describe machineset <name> -n openshift-machine-api
-```
-
-**Model download fails:**
-```bash
-oc logs job/download-qwen3-vl-8b -n model-downloads
-# Check for: invalid token, network issues, or OOM
-```
-
-**InferenceService not ready:**
-```bash
-oc get pod -n model-downloads
-oc logs -l serving.kserve.io/inferenceservice=qwen3-vl-8b -n model-downloads
-# Check for: GPU not found, model loading errors, PVC mount issues
-```
+**For GPU node or model issues:** See main [README](../../README.md) troubleshooting sections.
 
 **AnythingLLM connection error:**
 ```bash
 # Test from AnythingLLM pod
 oc exec -it deploy/anythingllm -n anythingllm -- \
   curl http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/models
+```
+
+**AnythingLLM pod not starting:**
+```bash
+oc get pods -n anythingllm
+oc logs -l app=anythingllm -n anythingllm
+oc describe pod -l app=anythingllm -n anythingllm
 ```
 
 ## Next Steps

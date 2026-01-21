@@ -1,0 +1,45 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+    serving.kserve.io/stop: 'true'
+    security.opendatahub.io/enable-auth: 'true'
+    openshift.io/description: 'Qwen3-VL-8B multimodal model for vision and language tasks'
+    openshift.io/display-name: qwen3-vl-8b
+    argocd.argoproj.io/sync-wave: "5"
+  name: qwen3-vl-8b
+  namespace: model-downloads
+  finalizers:
+    - inferenceservice.finalizers
+    - odh.inferenceservice.finalizers
+  labels:
+    networking.kserve.io/visibility: exposed
+    opendatahub.io/dashboard: 'true'
+    opendatahub.io/genai-asset: 'true'
+    app.kubernetes.io/name: qwen3-vl-8b
+    app.kubernetes.io/part-of: rhoai-demos
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    maxReplicas: 1
+    minReplicas: 1
+    model:
+      modelFormat:
+        name: vLLM
+      name: ''
+      resources:
+        limits:
+          cpu: '2'
+          memory: 24Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '2'
+          memory: 24Gi
+          nvidia.com/gpu: '1'
+      runtime: qwen3-vl-8b-runtime
+      storageUri: pvc://qwen3-vl-8b-model-storage/Qwen3-VL-8B-Instruct
+    tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        operator: Exists

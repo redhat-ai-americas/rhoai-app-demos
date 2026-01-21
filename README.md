@@ -139,11 +139,107 @@ oc scale machineset <machineset-name> --replicas=1 -n openshift-machine-api
 
 If you need to adjust the number of replicas or other settings, you can modify parameters locally without committing to Git. See [infra/gpu-machineset/README.md](infra/gpu-machineset/README.md) for customization options and troubleshooting.
 
-### 4. Choose a Demo
+### 4. Download and Deploy Models
+
+**Most demos require at least one model to be deployed.** Choose and deploy the models you need to support specific demos.
+
+#### Available Models
+
+| Model | Size | HuggingFace Token | Notes |
+|-------|------|-------------------|-------|
+| Qwen3-VL 8B | ~18GB | Optional | Multimodal, recommended for RAG demos |
+| Granite 7B | ~14GB | Optional | IBM's open instruction model |
+| Llama 3 8B | ~16GB | Required | Requires license acceptance on HuggingFace |
+
+#### Step 4a: Download Model (10-30 min)
+
+Create HuggingFace token secret (optional step for some models):
+
+```bash
+# Create HuggingFace token secret
+read -sp "Enter HuggingFace token: " HF_TOKEN
+echo
+
+oc create namespace model-downloads --dry-run=client -o yaml | oc apply -f -
+oc create secret generic huggingface-token \
+  --from-literal=token=${HF_TOKEN} \
+  -n model-downloads
+```
+
+Deploy your chosen model:
+
+```bash
+# Choose one:
+# Qwen3-VL 8B (recommended for most demos)
+oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
+
+# Granite 7B
+# oc apply -f gitops/platform/models/granite-7b-pvc.yaml
+
+# Llama 3 8B (requires license acceptance at https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
+# oc apply -f gitops/platform/models/llama-3-8b-pvc.yaml
+
+# Wait for ArgoCD application to be ready
+oc wait --for=condition=Ready application/model-qwen3-vl-8b-pvc \
+  -n openshift-gitops --timeout=180s
+
+# Monitor the download job progress
+oc logs -f job/download-qwen3-vl-8b -n model-downloads
+
+# Verify PVC was created and is bound
+oc get pvc -n model-downloads
+```
+
+**✓ Verify:**
+- Job shows `COMPLETIONS: 1/1`
+- PVC shows `Bound` status
+
+#### Step 4b: Deploy Model Serving (3-5 min)
+
+Deploy the ServingRuntime and InferenceService for your chosen model via GitOps. This will deploy both the vLLM serving runtime and configure the model to be accessible in the RHOAI dashboard:
+
+```bash
+# Choose one:
+# Qwen3-VL 8B (recommended for most demos)
+oc apply -f gitops/platform/models/qwen3-vl-8b-serving.yaml
+
+# Granite 7B
+# oc apply -f gitops/platform/models/granite-7b-serving.yaml
+
+# Llama 3 8B
+# oc apply -f gitops/platform/models/llama-3-8b-serving.yaml
+
+# Wait for ArgoCD application to be ready
+oc wait --for=condition=Ready application/model-qwen3-vl-8b-serving \
+  -n openshift-gitops --timeout=180s
+
+# Wait for InferenceService to be ready (5-10 minutes for GPU node scheduling and model loading)
+oc wait --for=condition=Ready inferenceservice/qwen3-vl-8b \
+  -n model-downloads --timeout=600s
+```
+
+**✓ Verify:**
+- ArgoCD Application shows `Synced` and `Healthy`
+- InferenceService shows `READY=True`
+- Model appears in RHOAI dashboard
+
+**Test the model:**
+```bash
+# Get the inference endpoint
+INFERENCE_URL=$(oc get inferenceservice qwen3-vl-8b -n model-downloads -o jsonpath='{.status.url}')
+
+# Test the model
+oc run curl-test --image=curlimages/curl -it --rm -n model-downloads -- \
+  curl -X POST http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model": "qwen3-vl-8b", "prompt": "Hello", "max_tokens": 50}'
+```
+
+### 5. Choose a Demo
 
 See **[DEMO-GUIDE.md](DEMO-GUIDE.md)** for available demos with complete deployment instructions.
 
-Example: [AnythingLLM RAG Demo](demos/anythingllm-rag-demo/README.md) - Document chat with RHOAI backend (30-45 min)
+Example: [AnythingLLM RAG Demo](demos/anythingllm-rag-demo/README.md) - Document chat with RHOAI backend (15-20 min with model already deployed)
 
 ## RHOAI 3.x Information
 
