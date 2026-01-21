@@ -19,7 +19,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: downloader
-          image: python:3.11-slim
+          image: registry.redhat.io/ubi9/python-311:9.7
           command:
             - /bin/bash
             - -c
@@ -30,10 +30,7 @@ spec:
               
               echo "Model: ${MODEL_ID}"
               echo "Target: ${STORAGE_PATH}"
-              echo ""
-              echo "NOTE: Some Qwen models may require accepting the license on HuggingFace"
-              echo "Visit: ${HUGGINGFACE_URL}"
-              
+              echo ""              
               # Token is optional for public models but recommended
               if [ -f /secrets/huggingface/token ]; then
                 export HUGGING_FACE_HUB_TOKEN=$(cat /secrets/huggingface/token)

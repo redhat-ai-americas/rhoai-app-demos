@@ -6,9 +6,10 @@ metadata:
   labels:
     app.kubernetes.io/name: qwen3-vl-8b
     app.kubernetes.io/part-of: rhoai-demos
+    opendatahub.io/dashboard: 'true'
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 18Gi

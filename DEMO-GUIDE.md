@@ -23,7 +23,7 @@ Quick reference for available demos, their prerequisites, and getting started.
 
 **Prerequisites**:
 - OpenShift 4.16+ with cluster-admin access
-- 1x GPU node (see [GPU deployment guide](README.md#3-deploy-gpu-nodes))
+- 1x GPU node (see [GPU deployment guide](README.md#3-deploy-gpu-nodes-aws))
 - 100Gi+ storage
 - HuggingFace token (required for gated models)
 
@@ -34,7 +34,9 @@ Quick reference for available demos, their prerequisites, and getting started.
 - AnythingLLM + ChromaDB
 - PVC or MinIO storage
 
-**Get Started**: Follow the detailed walkthrough in [demos/anythingllm-rag-demo/README.md](demos/anythingllm-rag-demo/)
+**Get Started**: 
+- Follow the demo [deployment walkthrough](demos/anythingllm-rag-demo/demo-deployment.md)
+- Follow the [demo instructions](demos/anythingllm-rag-demo/demo-user-instructions.md)
 
 ---
 

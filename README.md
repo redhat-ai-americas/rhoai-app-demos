@@ -35,8 +35,6 @@ Red Hat OpenShift AI (RHOAI) is an enterprise AI/ML platform. This repository pr
 
 ## Quick Start
 
-Get started in 3 steps:
-
 ### 1. Install OpenShift GitOps
 
 **Important**: The GitOps operator must be installed directly (not via ArgoCD) since ArgoCD doesn't exist yet.

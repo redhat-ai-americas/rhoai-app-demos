@@ -7,6 +7,7 @@ Simple step-by-step instructions to deploy the AnythingLLM RAG demo.
 Before starting, ensure you have completed:
 - OpenShift GitOps installation (see main README)
 - RHOAI Operator installation (see main README)
+- GPU Machineset installation (see main README)
 
 Verify:
 ```bash
@@ -20,12 +21,7 @@ oc get datasciencecluster -A
 
 **⚠️ GPU nodes are required for this demo.**
 
-This demo requires a GPU node for model inference. Follow the GPU deployment instructions in the [main README - Step 3: Deploy GPU Nodes](../../README.md#3-deploy-gpu-nodes).
-
-**Quick summary:**
-1. Create cluster-info ConfigMap
-2. Configure GPU parameters (set availability zone and replicas)
-3. Deploy GPU MachineSet via GitOps
+This demo requires a GPU node for model inference. Follow the GPU deployment instructions in the [main README - Step 3: Deploy GPU Nodes (AWS)](../../README.md#3-deploy-gpu-nodes-aws).
 
 **✓ Verify:** GPU node shows `Ready` status:
 
