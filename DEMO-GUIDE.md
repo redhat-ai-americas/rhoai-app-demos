@@ -70,7 +70,6 @@ All demos require:
 
 **Cloud Provider Access** (for GPU demos):
 - AWS: Ability to create g6.2xlarge or g6.4xlarge instances
-- Azure: Ability to create Standard_NC6s_v3 VMs
 - Appropriate quotas and service limits
 
 **HuggingFace Account** (for gated models):
@@ -158,7 +157,7 @@ oc get machineset -n openshift-machine-api
 oc get machine -n openshift-machine-api
 oc describe machine <machine-name> -n openshift-machine-api
 ```
-Common causes: AWS/Azure quota limits, invalid instance type, IAM permissions, missing cluster-info ConfigMap
+Common causes: AWS quota limits, invalid instance type, IAM permissions, missing cluster-info ConfigMap
 
 See the [GPU deployment troubleshooting guide](infra/gpu-machineset/README.md#troubleshooting) for detailed help.
 

@@ -9,21 +9,17 @@ GPU nodes are required for:
 - Model training
 - GPU-accelerated workloads
 
-This directory provides parameterized MachineSet templates for AWS and Azure with various GPU instance types.
+This directory provides parameterized MachineSet templates for AWS with various GPU instance types.
 
 ## Structure
 
 ```
 gpu-machineset/
 ├── base/                  # Base MachineSet template
-├── aws/                   # AWS configurations
-│   └── overlays/
-│       ├── g6-2xlarge/    # 1x L4, 8 vCPU, 32GB RAM
-│       └── g6-4xlarge/    # 1x L4, 16 vCPU, 64GB RAM
-└── azure/                 # Azure configurations
+└── aws/                   # AWS configurations
     └── overlays/
-        ├── nc6s-v3/       # 1x V100, 6 vCPU, 112GB RAM
-        └── nc12s-v3/      # 2x V100, 12 vCPU, 224GB RAM
+        ├── g6-2xlarge/    # 1x L4, 8 vCPU, 32GB RAM
+        └── g6-4xlarge/    # 1x L4, 16 vCPU, 64GB RAM
 ```
 
 ## Quick Start
@@ -32,16 +28,12 @@ gpu-machineset/
 
 See cloud-specific READMEs:
 - [AWS GPU instances](aws/README.md)
-- [Azure GPU instances](azure/README.md)
 
 ### 2. Deploy via ArgoCD (Recommended)
 
 ```bash
 # AWS g6.2xlarge
 oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
-
-# Azure NC6s v3
-oc apply -f gitops/infra/gpu-machineset-azure-nc.yaml
 ```
 
 ### 3. Verify Deployment
@@ -157,8 +149,6 @@ The operator provides:
 |-------|----------|------|-----------------|----------|
 | AWS | g6.2xlarge | 1x L4 | $1.10 | Production, single model |
 | AWS | g6.4xlarge | 1x L4 | $2.15 | Large models, vision |
-| Azure | NC6s_v3 | 1x V100 | $3.00 | Training |
-| Azure | NC12s_v3 | 2x V100 | $6.00 | Multi-GPU |
 
 *Prices are approximate On-Demand rates and vary by region*
 
@@ -183,8 +173,7 @@ oc describe machine <name> -n openshift-machine-api
 
 Common causes:
 - **AWS:** Instance quota exceeded, spot unavailable
-- **Azure:** VM size not available in region
-- **Both:** Network/subnet issues
+- Network/subnet issues
 
 ### Node Ready but GPU Not Detected
 
@@ -228,5 +217,4 @@ Check:
 
 - [OpenShift Machine Management](https://docs.openshift.com/container-platform/latest/machine_management/index.html)
 - [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
-- [AWS EC2 G5 Instances](https://aws.amazon.com/ec2/instance-types/g5/)
-- [Azure NCv3 Series](https://docs.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
+- [AWS EC2 G6 Instances](https://aws.amazon.com/ec2/instance-types/g6/)

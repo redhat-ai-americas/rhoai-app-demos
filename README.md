@@ -24,7 +24,7 @@ Red Hat OpenShift AI (RHOAI) is an enterprise AI/ML platform. This repository pr
 
 - **GitOps-based** - All components deployed via ArgoCD
 - **Modular** - Pick only what you need from the catalog
-- **Multi-cloud** - GPU support for AWS and Azure
+- **Multi-cloud** - GPU support for AWS (Azure support coming soon)
 - **Configurable** - Parameterized with Kustomize and Helm
 
 ## Prerequisites
