@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: model-downloads
 
 resources:
-  - ../base
+  - ../../base  # Shared base resources (namespace, serviceaccount, role)
+  - ../base     # Job-specific base (configmap, job)
   - pvc.yaml
 
 patches:

@@ -4,3 +4,5 @@ metadata:
   name: model-downloads
   labels:
     name: model-downloads
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"

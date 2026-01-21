@@ -33,7 +33,7 @@ oc get nodes -l nvidia.com/gpu.present=true
 
 ### 2. Download Model (10-30 min)
 
-This step creates a PVC and downloads the model to it in the `model-downloads` namespace.
+
 
 ```bash
 # Create HuggingFace token secret
@@ -45,10 +45,14 @@ oc create secret generic huggingface-token \
   --from-literal=token=${HF_TOKEN} \
   -n model-downloads
 
-# Start model download (creates PVC and downloads model)
+# Deploy model download via ArgoCD
 oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
 
-# Monitor progress
+# Wait for ArgoCD application to be ready
+oc wait --for=condition=Ready application/model-qwen3-vl-8b-pvc \
+  -n openshift-gitops --timeout=180s
+
+# Monitor the download job progress
 oc logs -f job/download-qwen3-vl-8b -n model-downloads
 
 # Verify PVC was created and is bound
@@ -58,6 +62,7 @@ oc get pvc -n model-downloads
 **✓ Verify:** 
 - Job shows `COMPLETIONS: 1/1`
 - PVC `qwen3-vl-8b-model-storage` shows `Bound` status
+
 
 ---
 

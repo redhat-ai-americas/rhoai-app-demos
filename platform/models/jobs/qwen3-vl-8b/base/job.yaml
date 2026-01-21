@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: qwen3-vl-8b-downloader
     app.kubernetes.io/part-of: rhoai-demos
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   backoffLimit: 3
   completions: 1
