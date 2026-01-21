@@ -1,0 +1,37 @@
+# Secrets and sensitive files
+*.secret.yaml
+*.token
+*-secret.yaml
+secrets/*.yaml
+!secrets/examples/*.example
+
+# Temporary files
+*.tmp
+*.swp
+*~
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Backup files
+*.bak
+*.backup
+
+# Local environment files
+.env
+.env.local
+.cursor/
+
+# ArgoCD temporary files
+argocd-*.tmp
+
+# Kustomize build output
+kustomization-build/
+
+# Helm temporary files
+*.tgz
+charts/
+Chart.lock
