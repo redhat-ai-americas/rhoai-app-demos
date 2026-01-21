@@ -76,7 +76,72 @@ oc wait --for=condition=Ready pod -l name=rhods-operator \
 
 **Note**: RHOAI 3.x currently uses the `fast-3.x` subscription channel. This will change to `stable` when RHOAI 3.2 is released. See [platform/rhoai-operator/README.md](platform/rhoai-operator/README.md) for configuration details.
 
-### 3. Choose a Demo
+### 3. Deploy GPU Nodes (AWS)
+
+**Most demos require GPU nodes for model inference.** Deploy GPU infrastructure before running demos.
+
+#### Step 3a: Auto-Detect Cluster Configuration
+
+This step creates a ConfigMap with your cluster's AWS-specific information (cluster name, region, availability zone). The GPU MachineSet will use this to configure itself automatically:
+
+```bash
+# Deploy the cluster-info detection job via GitOps
+oc apply -f gitops/infra/cluster-info-aws.yaml
+
+# Wait for detection to complete (30-60 seconds)
+oc wait --for=condition=complete job/generate-cluster-info-aws \
+  -n openshift-machine-api --timeout=60s
+
+# Verify the detected configuration
+oc get configmap cluster-info-aws -n openshift-machine-api -o yaml
+```
+
+
+
+#### Step 3b: Deploy GPU Nodes
+
+```bash
+# For AWS g6.2xlarge (1x NVIDIA L4, 8 vCPU, 32GB RAM, ~$1.10/hr)
+oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
+
+# For AWS g6.4xlarge (1x NVIDIA L4, 16 vCPU, 64GB RAM, ~$2.15/hr)
+# oc apply -f gitops/infra/gpu-machineset-aws-g5.yaml
+
+# Wait for GPU node to be Ready (5-10 minutes)
+oc get nodes -l nvidia.com/gpu.present=true -w
+```
+
+**Verify GPU deployment:**
+
+```bash
+# Check MachineSet was created
+oc get machineset -n openshift-machine-api | grep gpu
+
+# Check Machine is provisioning
+oc get machine -n openshift-machine-api | grep gpu
+
+# Verify GPU node is Ready
+oc get nodes -l nvidia.com/gpu.present=true
+
+# Check GPU detection
+oc describe node <gpu-node-name> | grep -i gpu
+```
+
+**Cost Management Tip:** Scale down GPU nodes when not in use:
+
+```bash
+# Scale down to 0 nodes
+oc scale machineset <machineset-name> --replicas=0 -n openshift-machine-api
+
+# Scale back up when needed
+oc scale machineset <machineset-name> --replicas=1 -n openshift-machine-api
+```
+
+**Optional: Customize GPU Configuration**
+
+If you need to adjust the number of replicas or other settings, you can modify parameters locally without committing to Git. See [infra/gpu-machineset/README.md](infra/gpu-machineset/README.md) for customization options and troubleshooting.
+
+### 4. Choose a Demo
 
 See **[DEMO-GUIDE.md](DEMO-GUIDE.md)** for available demos with complete deployment instructions.
 
@@ -145,11 +210,12 @@ Quick examples for common customizations. See component READMEs for details.
 ### GPU Instance Types
 
 ```bash
-# Edit parameters for your cloud provider
-vim infra/gpu-machineset/aws/overlays/g6-2xlarge/params.yaml
 
-# Then apply via GitOps
+# g6.2xlarge (1x NVIDIA L4, 8 vCPU, 32GB RAM)
 oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
+
+# g6.4xlarge (1x NVIDIA L4, 16 vCPU, 64GB RAM)  
+# oc apply -f gitops/infra/gpu-machineset-aws-g5.yaml
 ```
 
 ### Storage Options

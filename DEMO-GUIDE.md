@@ -23,7 +23,7 @@ Quick reference for available demos, their prerequisites, and getting started.
 
 **Prerequisites**:
 - OpenShift 4.16+ with cluster-admin access
-- 1x GPU node (AWS g6.2xlarge or Azure NC6s_v3)
+- 1x GPU node (see [GPU deployment guide](README.md#3-deploy-gpu-nodes))
 - 100Gi+ storage
 - HuggingFace token (required for gated models)
 
@@ -94,6 +94,7 @@ All demos require OpenShift GitOps and RHOAI as a foundation.
 
 1. **[Install OpenShift GitOps](README.md#1-install-openshift-gitops)** - Required for GitOps-based deployment (~3-4 minutes)
 2. **[Install RHOAI](README.md#2-install-rhoai)** - Required for model serving (~5-10 minutes)
+3. **[Deploy GPU Nodes](README.md#3-deploy-gpu-nodes)** - Required for most demos (~5-10 minutes)
 
 **Verify prerequisites are ready:**
 ```bash
@@ -102,9 +103,12 @@ oc get pods -n openshift-gitops
 
 # Check RHOAI is ready
 oc get datasciencecluster -A
+
+# Check GPU nodes are ready (if required for your demo)
+oc get nodes -l nvidia.com/gpu.present=true
 ```
 
-Both should show Running/Ready status before proceeding.
+All should show Running/Ready status before proceeding.
 
 ### Choose and Run a Demo
 
@@ -112,13 +116,14 @@ Once prerequisites are complete:
 
 1. Choose a demo from [Available Demos](#available-demos)
 2. Follow its detailed README for:
-   - GPU deployment
    - Storage setup
    - Model downloads
    - Application configuration
    - Demo walkthrough
 
 **Example**: [AnythingLLM RAG Demo →](demos/anythingllm-rag-demo/README.md)
+
+**Note**: GPU deployment is now covered in the main README prerequisites (Step 3), so individual demos will reference that section rather than duplicating the instructions.
 
 
 ## Troubleshooting
@@ -153,7 +158,9 @@ oc get machineset -n openshift-machine-api
 oc get machine -n openshift-machine-api
 oc describe machine <machine-name> -n openshift-machine-api
 ```
-Common causes: AWS/Azure quota limits, invalid instance type, IAM permissions
+Common causes: AWS/Azure quota limits, invalid instance type, IAM permissions, missing cluster-info ConfigMap
+
+See the [GPU deployment troubleshooting guide](infra/gpu-machineset/README.md#troubleshooting) for detailed help.
 
 **GPU Not Detected**:
 ```bash

@@ -1,0 +1,138 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-info-generator
+  namespace: openshift-machine-api
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-info-generator
+rules:
+  - apiGroups: ["machine.openshift.io"]
+    resources: ["machinesets", "machines"]
+    verbs: ["get", "list"]
+  - apiGroups: ["config.openshift.io"]
+    resources: ["infrastructures"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-info-generator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-info-generator
+subjects:
+  - kind: ServiceAccount
+    name: cluster-info-generator
+    namespace: openshift-machine-api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info-generator-script
+  namespace: openshift-machine-api
+data:
+  generate.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Extracting AWS cluster information..."
+
+    # Get cluster name from an existing worker machineset
+    CLUSTER_NAME=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}')
+
+    if [ -z "$CLUSTER_NAME" ]; then
+      echo "Error: Could not determine cluster name. Ensure you have at least one MachineSet."
+      exit 1
+    fi
+
+    echo "Detected cluster name: $CLUSTER_NAME"
+
+    # Get infrastructure details
+    INFRA_NAME=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
+    PLATFORM_TYPE=$(oc get infrastructure cluster -o jsonpath='{.status.platformStatus.type}')
+    
+    # Verify this is an AWS cluster
+    if [ "$PLATFORM_TYPE" != "AWS" ]; then
+      echo "Warning: Platform type is $PLATFORM_TYPE, expected AWS"
+    fi
+    
+    # Get AWS-specific details
+    REGION=$(oc get infrastructure cluster -o jsonpath='{.status.platformStatus.aws.region}')
+    
+    # Get availability zone from an existing worker machine
+    AVAILABILITY_ZONE=$(oc get machines -n openshift-machine-api -o jsonpath='{.items[0].spec.providerSpec.value.placement.availabilityZone}')
+
+    if [ -z "$AVAILABILITY_ZONE" ]; then
+      echo "Error: Could not determine availability zone. Ensure you have at least one Machine."
+      exit 1
+    fi
+
+    echo "Infrastructure name: $INFRA_NAME"
+    echo "Platform type: $PLATFORM_TYPE"
+    echo "Region: $REGION"
+    echo "Availability Zone: $AVAILABILITY_ZONE"
+
+    # Create the ConfigMap
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cluster-info-aws
+      namespace: openshift-machine-api
+      labels:
+        app.kubernetes.io/name: cluster-info-aws
+        app.kubernetes.io/part-of: rhoai-demos
+        app.kubernetes.io/component: infrastructure
+    data:
+      clusterName: "${CLUSTER_NAME}"
+      infrastructureName: "${INFRA_NAME}"
+      platformType: "${PLATFORM_TYPE}"
+      region: "${REGION}"
+      availabilityZone: "${AVAILABILITY_ZONE}"
+    EOF
+
+    echo ""
+    echo "✓ cluster-info-aws ConfigMap created successfully!"
+    echo ""
+    echo "Verify with: oc get configmap cluster-info-aws -n openshift-machine-api -o yaml"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: generate-cluster-info-aws
+  namespace: openshift-machine-api
+  labels:
+    app.kubernetes.io/name: cluster-info-generator
+    app.kubernetes.io/part-of: rhoai-demos
+    app.kubernetes.io/component: infrastructure
+spec:
+  ttlSecondsAfterFinished: 300  # Clean up after 5 minutes
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cluster-info-generator
+    spec:
+      serviceAccountName: cluster-info-generator
+      restartPolicy: OnFailure
+      containers:
+        - name: generator
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          command:
+            - /bin/bash
+            - /scripts/generate.sh
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+      volumes:
+        - name: script
+          configMap:
+            name: cluster-info-generator-script
+            defaultMode: 0755

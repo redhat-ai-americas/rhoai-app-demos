@@ -3,11 +3,18 @@
 
 # Instance configuration
 instanceType: g6.4xlarge         # NVIDIA L4 GPU
-replicas: 1                      # Number of GPU nodes
-availabilityZone: us-east-1a     # Change to your AZ
+replicas: 1                      # Number of GPU nodes (increase for multiple demos)
+
+# Note: Availability zone and region are auto-detected from your cluster
+# via the cluster-info-aws ConfigMap. No manual configuration needed!
 
 # GPU details for this instance type:
 # - 1x NVIDIA L4 (24GB GDDR6)
 # - 16 vCPUs
 # - 64 GB RAM
+# - Cost: ~$2.15/hour (on-demand, us-east-1)
 # - Good for: Large models, high throughput, vision models
+#
+# Common scenarios:
+# - replicas: 1 - Single large model
+# - replicas: 2 - Multiple large models or high-throughput demos

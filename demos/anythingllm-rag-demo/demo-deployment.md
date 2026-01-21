@@ -18,36 +18,20 @@ oc get datasciencecluster -A
 
 ### 1. Deploy GPU Node (5-10 min)
 
-**⚠️ Configure parameters first:**
+**⚠️ GPU nodes are required for this demo.**
+
+This demo requires a GPU node for model inference. Follow the GPU deployment instructions in the [main README - Step 3: Deploy GPU Nodes](../../README.md#3-deploy-gpu-nodes).
+
+**Quick summary:**
+1. Create cluster-info ConfigMap
+2. Configure GPU parameters (set availability zone and replicas)
+3. Deploy GPU MachineSet via GitOps
+
+**✓ Verify:** GPU node shows `Ready` status:
 
 ```bash
-# Find your cluster's availability zones
-oc get machines -n openshift-machine-api -o jsonpath='{.items[0].spec.providerSpec.value.placement.availabilityZone}{"\n"}'
+oc get nodes -l nvidia.com/gpu.present=true
 ```
-
-```bash
-# For AWS - Edit parameters to match your cluster
-vim infra/gpu-machineset/aws/overlays/g6-2xlarge/params.yaml
-
-# REQUIRED: Update availabilityZone to match your cluster
-# OPTIONAL: Adjust replicas or instanceType as needed
-```
-
-
-**Then deploy:**
-
-```bash
-# For AWS:
-oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
-
-# For Azure:
-# oc apply -f gitops/infra/gpu-machineset-azure-nc.yaml
-
-# Wait for node to be Ready
-oc get nodes -l nvidia.com/gpu.present=true -w
-```
-
-**✓ Verify:** One GPU node shows `Ready` status
 
 ---
 

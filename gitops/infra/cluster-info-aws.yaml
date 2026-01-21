@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-info-aws
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: cluster-info-aws
+    app.kubernetes.io/part-of: rhoai-demos
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-ai-americas/rhoai-app-demos.git
+    targetRevision: main
+    path: infra/cluster-info-aws
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openshift-machine-api
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace already exists
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m
