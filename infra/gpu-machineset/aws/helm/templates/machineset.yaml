@@ -1,31 +1,23 @@
-{{- $clusterInfo := lookup "v1" "ConfigMap" "openshift-machine-api" "cluster-info-aws" -}}
-{{- if not $clusterInfo -}}
-{{- fail "ConfigMap 'cluster-info-aws' not found in namespace 'openshift-machine-api'. Please run the cluster-info-aws job first." -}}
-{{- end -}}
-{{- $clusterName := index $clusterInfo.data "clusterName" -}}
-{{- $region := index $clusterInfo.data "region" -}}
-{{- $az := index $clusterInfo.data "availabilityZone" -}}
-{{- $infraID := index $clusterInfo.data "infraID" -}}
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
 metadata:
-  name: {{ $clusterName }}-gpu-{{ $az }}
+  name: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
   namespace: openshift-machine-api
   labels:
-    machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
+    machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
-      machine.openshift.io/cluster-api-machineset: {{ $clusterName }}-gpu-{{ $az }}
+      machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
+      machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
   template:
     metadata:
       labels:
-        machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
+        machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
         machine.openshift.io/cluster-api-machine-role: worker
         machine.openshift.io/cluster-api-machine-type: worker
-        machine.openshift.io/cluster-api-machineset: {{ $clusterName }}-gpu-{{ $az }}
+        machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
         node-role.kubernetes.io/gpu: ""
     spec:
       metadata:
@@ -41,7 +33,7 @@ spec:
           apiVersion: machine.openshift.io/v1beta1
           instanceType: {{ .Values.instanceType }}
           ami:
-            id: ""  # Uses latest RHCOS AMI
+            id: {{ .Values.amiId | quote }}
           blockDevices:
             - ebs:
                 volumeSize: {{ .Values.rootVolume.size }}
@@ -49,22 +41,26 @@ spec:
                 iops: {{ .Values.rootVolume.iops }}
               deviceName: /dev/sda1
           placement:
-            availabilityZone: {{ $az }}
-            region: {{ $region }}
+            availabilityZone: {{ .Values.availabilityZone }}
+            region: {{ .Values.region }}
           securityGroups:
             - filters:
                 - name: tag:Name
                   values:
-                    - "{{ $infraID }}-worker-sg"
+                    - "{{ .Values.infraID }}-node"
+            - filters:
+                - name: tag:Name
+                  values:
+                    - "{{ .Values.infraID }}-lb"
           subnet:
             filters:
               - name: tag:Name
                 values:
-                  - "{{ $infraID }}-private-{{ $az }}"
+                  - "{{ .Values.infraID }}-subnet-private-{{ .Values.availabilityZone }}"
           iamInstanceProfile:
-            id: "{{ $infraID }}-worker-profile"
+            id: "{{ .Values.infraID }}-worker-profile"
           tags:
-            - name: kubernetes.io/cluster/{{ $infraID }}
+            - name: kubernetes.io/cluster/{{ .Values.infraID }}
               value: owned
             - name: gpu-node
               value: "true"

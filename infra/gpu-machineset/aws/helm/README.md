@@ -1,20 +1,91 @@
 # AWS GPU MachineSet Helm Chart
 
-This Helm chart automatically deploys GPU-enabled MachineSets for AWS with auto-detected cluster configuration.
+This Helm chart deploys GPU-enabled MachineSets for AWS with cluster-specific configuration values.
 
 ## Prerequisites
 
-The `cluster-info-aws` ConfigMap must exist in the `openshift-machine-api` namespace before deploying. This is created by running:
+### Install ArgoCD CLI
 
 ```bash
-oc apply -f gitops/infra/cluster-info-aws.yaml
+# macOS
+brew install argocd
+
+# Linux
+curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+chmod +x /usr/local/bin/argocd
+
+# Or download from: https://github.com/argoproj/argo-cd/releases
+```
+
+### Login to ArgoCD
+
+```bash
+# Get ArgoCD admin password and server URL
+ARGOCD_PASSWORD=$(oc get secret/openshift-gitops-cluster -n openshift-gitops -o jsonpath='{.data.admin\.password}' | base64 -d)
+ARGOCD_SERVER=$(oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}')
+
+# Login
+argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
 ```
 
 ## How It Works
 
-1. **Auto-Detection**: The chart uses Helm's `lookup` function to fetch cluster configuration from the `cluster-info-aws` ConfigMap at render time
-2. **Dynamic Values**: Cluster name, region, availability zone, and infrastructure ID are automatically injected into the MachineSet
-3. **ArgoCD Management**: ArgoCD continuously reconciles the MachineSet, ensuring it stays in sync with your desired state
+1. Query OpenShift for cluster configuration
+2. Use ArgoCD CLI to set Helm parameters
+3. Sync to create the MachineSet
+
+## Deployment via Notebook (Recommended)
+
+Use `platform-deployment.ipynb` which automatically handles cluster detection and ArgoCD CLI setup.
+
+## Manual Deployment
+
+```bash
+# Extract cluster information
+CLUSTER_NAME=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
+REGION=$(oc get infrastructure cluster -o jsonpath='{.status.platformStatus.aws.region}')
+AVAILABILITY_ZONE=$(oc get machines -n openshift-machine-api -l machine.openshift.io/cluster-api-machine-role=worker -o jsonpath='{.items[0].spec.providerSpec.value.placement.availabilityZone}')
+INFRA_ID=$CLUSTER_NAME
+
+# Create Application (without auto-sync to avoid premature deployment)
+oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
+
+# Set Helm parameters
+argocd app set gpu-machineset-aws-g6 \
+  -p clusterName="$CLUSTER_NAME" \
+  -p region="$REGION" \
+  -p availabilityZone="$AVAILABILITY_ZONE" \
+  -p infraID="$INFRA_ID"
+
+# Enable auto-sync and sync
+argocd app set gpu-machineset-aws-g6 --sync-policy automated --auto-prune --self-heal
+argocd app sync gpu-machineset-aws-g6
+```
+
+## Available Configurations
+
+- **g6.2xlarge**: 1x NVIDIA L4, 8 vCPU, 32GB RAM (~$1.10/hr)
+- **g6.4xlarge**: 1x NVIDIA L4, 16 vCPU, 64GB RAM (~$1.62/hr)
+
+Use `gitops/infra/gpu-machineset-aws-g6.yaml` or `gitops/infra/gpu-machineset-aws-g6-4xlarge.yaml`
+
+## Customization
+
+Override default values:
+
+```bash
+argocd app set gpu-machineset-aws-g6 -p replicas=2
+```
+
+## Verification
+
+```bash
+# Check MachineSet
+oc get machineset -n openshift-machine-api | grep gpu
+
+# Check GPU nodes
+oc get nodes -l nvidia.com/gpu.present=true
+```
 
 ## Available Configurations
 

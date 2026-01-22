@@ -16,13 +16,21 @@ spec:
     helm:
       valueFiles:
         - values-g6-2xlarge.yaml
+      parameters:
+        - name: clusterName
+          value: REPLACE_ME  # Set via: oc patch application/gpu-machineset-aws-g6 -n openshift-gitops --type=json -p '[{"op":"replace","path":"/spec/source/helm/parameters/0/value","value":"YOUR_CLUSTER_NAME"}]'
+        - name: region
+          value: REPLACE_ME
+        - name: availabilityZone
+          value: REPLACE_ME
+        - name: infraID
+          value: REPLACE_ME
   destination:
     server: https://kubernetes.default.svc
     namespace: openshift-machine-api
   syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
+    syncOptions:
+      - CreateNamespace=false
     retry:
       limit: 5
       backoff:

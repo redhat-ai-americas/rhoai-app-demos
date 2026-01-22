@@ -1,6 +1,14 @@
 # AWS GPU MachineSet Configuration
-# Cluster info (region, AZ, clusterName) will be auto-detected from cluster-info-aws ConfigMap
 
+# Cluster-specific values (auto-detected from cluster-info-aws ConfigMap)
+# Set these via --set flags or override values file
+clusterName: ""  # e.g., mycluster-abc123
+region: ""       # e.g., us-east-1
+availabilityZone: ""  # e.g., us-east-1a
+infraID: ""      # e.g., mycluster-abc123-12345
+amiId: ""        # e.g., ami-0bc8dda494f111572 (auto-detected from existing worker nodes)
+
+# GPU instance configuration
 instanceType: g6.2xlarge  # NVIDIA L4 GPU
 replicas: 1
 
