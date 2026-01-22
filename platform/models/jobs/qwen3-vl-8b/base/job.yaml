@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: download-qwen3-vl-8b
-  namespace: model-downloads
+  namespace: demo
   labels:
     app.kubernetes.io/name: qwen3-vl-8b-downloader
     app.kubernetes.io/part-of: rhoai-demos

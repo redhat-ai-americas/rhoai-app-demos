@@ -171,8 +171,8 @@ oc get pods -n nvidia-gpu-operator  # Check if GPU operator installed
 
 **Model Download Job Failing**:
 ```bash
-oc get jobs -n model-downloads
-oc logs job/<job-name> -n model-downloads
+oc get jobs -n demo
+oc logs job/<job-name> -n demo
 ```
 Common causes: Invalid HuggingFace token, insufficient storage, gated model without license acceptance
 

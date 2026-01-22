@@ -160,10 +160,10 @@ Create HuggingFace token secret (optional step for some models):
 read -sp "Enter HuggingFace token: " HF_TOKEN
 echo
 
-oc create namespace model-downloads --dry-run=client -o yaml | oc apply -f -
+oc create namespace demo --dry-run=client -o yaml | oc apply -f -
 oc create secret generic huggingface-token \
   --from-literal=token=${HF_TOKEN} \
-  -n model-downloads
+  -n demo
 ```
 
 Deploy your chosen model:
@@ -184,10 +184,10 @@ oc wait --for=condition=Ready application/model-qwen3-vl-8b-pvc \
   -n openshift-gitops --timeout=180s
 
 # Monitor the download job progress
-oc logs -f job/download-qwen3-vl-8b -n model-downloads
+oc logs -f job/download-qwen3-vl-8b -n demo
 
 # Verify PVC was created and is bound
-oc get pvc -n model-downloads
+oc get pvc -n demo
 ```
 
 **✓ Verify:**
@@ -215,7 +215,7 @@ oc wait --for=condition=Ready application/model-qwen3-vl-8b-serving \
 
 # Wait for InferenceService to be ready (5-10 minutes for GPU node scheduling and model loading)
 oc wait --for=condition=Ready inferenceservice/qwen3-vl-8b \
-  -n model-downloads --timeout=600s
+  -n demo --timeout=600s
 ```
 
 **✓ Verify:**
@@ -226,11 +226,11 @@ oc wait --for=condition=Ready inferenceservice/qwen3-vl-8b \
 **Test the model:**
 ```bash
 # Get the inference endpoint
-INFERENCE_URL=$(oc get inferenceservice qwen3-vl-8b -n model-downloads -o jsonpath='{.status.url}')
+INFERENCE_URL=$(oc get inferenceservice qwen3-vl-8b -n demo -o jsonpath='{.status.url}')
 
 # Test the model
-oc run curl-test --image=curlimages/curl -it --rm -n model-downloads -- \
-  curl -X POST http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/completions \
+oc run curl-test --image=curlimages/curl -it --rm -n demo -- \
+  curl -X POST http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "qwen3-vl-8b", "prompt": "Hello", "max_tokens": 50}'
 ```

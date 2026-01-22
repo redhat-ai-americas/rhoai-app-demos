@@ -4,14 +4,14 @@ metadata:
   annotations:
     opendatahub.io/apiProtocol: REST
     opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
-    opendatahub.io/runtime-version: v0.9.1.0
+    opendatahub.io/runtime-version: v0.11.0
     opendatahub.io/serving-runtime-scope: namespace
     opendatahub.io/template-display-name: vLLM NVIDIA GPU ServingRuntime for KServe
     opendatahub.io/template-name: vllm-cuda-runtime-template
     openshift.io/display-name: Qwen3-VL-8B vLLM Runtime
     argocd.argoproj.io/sync-wave: "4"
   name: qwen3-vl-8b-runtime
-  namespace: model-downloads
+  namespace: demo
   labels:
     opendatahub.io/dashboard: 'true'
 spec:
@@ -37,6 +37,28 @@ spec:
       ports:
         - containerPort: 8080
           protocol: TCP
+      startupProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 30
+        periodSeconds: 30
+        failureThreshold: 40
+        timeoutSeconds: 5
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        periodSeconds: 100
+        timeoutSeconds: 5
+        failureThreshold: 3
   multiModel: false
   supportedModelFormats:
     - autoSelect: true

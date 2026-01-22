@@ -9,7 +9,7 @@ metadata:
     openshift.io/display-name: qwen3-vl-8b
     argocd.argoproj.io/sync-wave: "5"
   name: qwen3-vl-8b
-  namespace: model-downloads
+  namespace: demo
   finalizers:
     - inferenceservice.finalizers
     - odh.inferenceservice.finalizers

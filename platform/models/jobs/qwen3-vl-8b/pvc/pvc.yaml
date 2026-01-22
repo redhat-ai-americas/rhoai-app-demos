@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: qwen3-vl-8b-model-storage
-  namespace: model-downloads
+  namespace: demo
   labels:
     app.kubernetes.io/name: qwen3-vl-8b
     app.kubernetes.io/part-of: rhoai-demos

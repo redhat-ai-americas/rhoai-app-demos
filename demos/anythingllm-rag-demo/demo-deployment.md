@@ -15,7 +15,7 @@ Verify:
 oc get pods -n openshift-gitops
 oc get datasciencecluster -A
 oc get nodes -l nvidia.com/gpu.present=true
-oc get inferenceservice -n model-downloads
+oc get inferenceservice -n demo
 ```
 
 ## Deployment Steps
@@ -35,10 +35,10 @@ oc get inferenceservice -n model-downloads
 oc get nodes -l nvidia.com/gpu.present=true
 
 # Model PVC is Bound
-oc get pvc -n model-downloads
+oc get pvc -n demo
 
 # InferenceService is Ready
-oc get inferenceservice -n model-downloads
+oc get inferenceservice -n demo
 ```
 
 ---
@@ -55,11 +55,11 @@ vim apps/3rd-party-apps/anythingllm/helm/values-rhoai.yaml
 Update these values:
 ```yaml
 llm:
-  baseUrl: "http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1"
+  baseUrl: "http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1"
   model: "Qwen3-VL-8B-Instruct"
 
 embedding:
-  baseUrl: "http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1"
+  baseUrl: "http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1"
   model: "Qwen3-VL-8B-Instruct"
 ```
 
@@ -92,7 +92,7 @@ oc get route anythingllm -n anythingllm
 
 # Test model connectivity from AnythingLLM
 oc exec -it deploy/anythingllm -n anythingllm -- \
-  curl http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/models
+  curl http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1/models
 ```
 
 ## Time Estimate
@@ -126,7 +126,7 @@ To clean up GPU node and model resources, see the main [README](../../README.md)
 ```bash
 # Test from AnythingLLM pod
 oc exec -it deploy/anythingllm -n anythingllm -- \
-  curl http://qwen3-vl-8b-predictor.model-downloads.svc.cluster.local/v1/models
+  curl http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1/models
 ```
 
 **AnythingLLM pod not starting:**
