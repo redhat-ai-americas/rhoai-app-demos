@@ -75,6 +75,28 @@ spec:
       kinds:
       - TaskRun
       - PipelineRun
+  resourceHealthChecks:
+    - group: ""
+      kind: PersistentVolumeClaim
+      check: |
+        hs = {}
+        if obj.status ~= nil then
+          if obj.status.phase ~= nil then
+            if obj.status.phase == "Pending" then
+              hs.status = "Healthy"
+              hs.message = "PVC is Pending (WaitForFirstConsumer)"
+              return hs
+            end
+            if obj.status.phase == "Bound" then
+              hs.status = "Healthy"
+              hs.message = "PVC is Bound"
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for PVC"
+        return hs
   dex:
     openShiftOAuth: true
     resources:
