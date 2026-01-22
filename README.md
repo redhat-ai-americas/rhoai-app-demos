@@ -34,6 +34,8 @@ Red Hat OpenShift AI (RHOAI) is an enterprise AI/ML platform. This repository pr
 - **Cloud provider access** (for GPU nodes)
 - **[uv](https://docs.astral.sh/uv/)** (Python package manager) for notebook execution
 
+The demos were tested on Openshift on AWS with a single control-plane node of type `m6a.4xlarge`.
+
 ### Setting Up the Python Environment
 
 This repository uses `uv` for Python dependency management. To set up the environment for running the deployment notebook:
