@@ -1,0 +1,72 @@
+{{- $clusterInfo := lookup "v1" "ConfigMap" "openshift-machine-api" "cluster-info-aws" -}}
+{{- if not $clusterInfo -}}
+{{- fail "ConfigMap 'cluster-info-aws' not found in namespace 'openshift-machine-api'. Please run the cluster-info-aws job first." -}}
+{{- end -}}
+{{- $clusterName := index $clusterInfo.data "clusterName" -}}
+{{- $region := index $clusterInfo.data "region" -}}
+{{- $az := index $clusterInfo.data "availabilityZone" -}}
+{{- $infraID := index $clusterInfo.data "infraID" -}}
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  name: {{ $clusterName }}-gpu-{{ $az }}
+  namespace: openshift-machine-api
+  labels:
+    machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
+      machine.openshift.io/cluster-api-machineset: {{ $clusterName }}-gpu-{{ $az }}
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-cluster: {{ $clusterName }}
+        machine.openshift.io/cluster-api-machine-role: worker
+        machine.openshift.io/cluster-api-machine-type: worker
+        machine.openshift.io/cluster-api-machineset: {{ $clusterName }}-gpu-{{ $az }}
+        node-role.kubernetes.io/gpu: ""
+    spec:
+      metadata:
+        labels:
+          {{- range $key, $value := .Values.labels }}
+          {{ $key }}: {{ $value | quote }}
+          {{- end }}
+      taints:
+        {{- toYaml .Values.taints | nindent 8 }}
+      providerSpec:
+        value:
+          kind: AWSMachineProviderConfig
+          apiVersion: machine.openshift.io/v1beta1
+          instanceType: {{ .Values.instanceType }}
+          ami:
+            id: ""  # Uses latest RHCOS AMI
+          blockDevices:
+            - ebs:
+                volumeSize: {{ .Values.rootVolume.size }}
+                volumeType: {{ .Values.rootVolume.type }}
+                iops: {{ .Values.rootVolume.iops }}
+              deviceName: /dev/sda1
+          placement:
+            availabilityZone: {{ $az }}
+            region: {{ $region }}
+          securityGroups:
+            - filters:
+                - name: tag:Name
+                  values:
+                    - "{{ $infraID }}-worker-sg"
+          subnet:
+            filters:
+              - name: tag:Name
+                values:
+                  - "{{ $infraID }}-private-{{ $az }}"
+          iamInstanceProfile:
+            id: "{{ $infraID }}-worker-profile"
+          tags:
+            - name: kubernetes.io/cluster/{{ $infraID }}
+              value: owned
+            - name: gpu-node
+              value: "true"
+          userDataSecret:
+            name: worker-user-data

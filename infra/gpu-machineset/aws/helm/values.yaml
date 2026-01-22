@@ -1,0 +1,26 @@
+# AWS GPU MachineSet Configuration
+# Cluster info (region, AZ, clusterName) will be auto-detected from cluster-info-aws ConfigMap
+
+instanceType: g6.2xlarge  # NVIDIA L4 GPU
+replicas: 1
+
+# Storage configuration
+rootVolume:
+  size: 120
+  type: gp3
+  iops: 3000
+
+# GPU node configuration
+labels:
+  node-role.kubernetes.io/gpu: ""
+  nvidia.com/gpu.present: "true"
+
+taints:
+  - key: nvidia.com/gpu
+    value: "true"
+    effect: NoSchedule
+
+# GPU instance type details:
+# g6.2xlarge: 1x NVIDIA L4 (24GB), 8 vCPU, 32GB RAM, ~$1.10/hr
+# g6.4xlarge: 1x NVIDIA L4 (24GB), 16 vCPU, 64GB RAM, ~$1.62/hr
+# g6.12xlarge: 4x NVIDIA L4 (96GB), 48 vCPU, 192GB RAM, ~$4.86/hr

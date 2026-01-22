@@ -12,7 +12,10 @@ spec:
   source:
     repoURL: https://github.com/redhat-ai-americas/rhoai-app-demos.git
     targetRevision: main
-    path: infra/gpu-machineset/aws/overlays/g6-2xlarge
+    path: infra/gpu-machineset/aws/helm
+    helm:
+      valueFiles:
+        - values-g6-2xlarge.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: openshift-machine-api
