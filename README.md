@@ -4,11 +4,11 @@
 
 This is a modular, GitOps-enabled repository for deploying and demonstrating Red Hat OpenShift AI (RHOAI) with various AI applications.
 
-The value of AI is seen most easily through the use of AI applications that users can interact with, and there are a number of really good out-of-the-box, production-ready, AI applications. 
+The value of AI is seen most easily through the use of AI applications that users can interact with, and there are a number of really good out-of-the-box, open-source, production-ready, AI applications out there. 
 
 Pairing these applications with a RHOAI platform serves the following purposes:
-- Illustrates the value of RHOAI as an AI platform in-context
-- Illustrates solutions for common AI use-cases
+- Illustrates the value of RHOAI as an AI platform in the context of supporting excellent applications
+- Fascilitates illustration of solutions for common AI use-cases
 - Makes it possible to create demos that resonate with multiple user types
 
 ## Overview
@@ -32,118 +32,39 @@ Red Hat OpenShift AI (RHOAI) is an enterprise AI/ML platform. This repository pr
 - **OpenShift 4.16+** with cluster-admin access (4.16+ required for RHOAI 3.x)
 - **`oc` CLI** installed and configured
 - **Cloud provider access** (for GPU nodes)
+- **[uv](https://docs.astral.sh/uv/)** (Python package manager) for notebook execution
 
-## Quick Start
+### Setting Up the Python Environment
 
-### 1. Install OpenShift GitOps
-
-**Important**: The GitOps operator must be installed directly (not via ArgoCD) since ArgoCD doesn't exist yet.
-
-```bash
-# Step 1: Install the operator subscription
-oc apply -k platform/gitops-operator/base/
-
-# Wait for the operator to install (1-2 minutes)
-oc wait --for=condition=Available deployment/openshift-gitops-operator-controller-manager \
-  -n openshift-operators --timeout=300s
-
-# Step 2: Create the ArgoCD instance
-oc apply -k platform/gitops-operator/instance/
-
-# Wait for ArgoCD server to be ready (1-2 minutes)
-oc wait --for=condition=Ready pod -l app.kubernetes.io/name=openshift-gitops-server \
-  -n openshift-gitops --timeout=300s
-```
-
-### 2. Install RHOAI
-
-RHOAI 3.x requires dependencies to be installed first. The GitOps Application will handle this automatically:
+This repository uses `uv` for Python dependency management. To set up the environment for running the deployment notebook:
 
 ```bash
-# This deploys:
-# - Node Feature Discovery (NFD) operator
-# - Red Hat Build for Kueue operator  
-# - RHOAI operator subscription (fast-3.x channel)
-# - DataScienceCluster instance
-oc apply -f gitops/platform/rhoai-operator.yaml
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Wait for RHOAI (5-10 minutes)
-oc wait --for=condition=Ready pod -l name=rhods-operator \
-  -n redhat-ods-operator --timeout=600s
+# Sync dependencies and activate the virtual environment
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate  # On macOS/Linux
+# OR
+.venv\Scripts\activate     # On Windows
 ```
 
-**Note**: RHOAI 3.x currently uses the `fast-3.x` subscription channel. This will change to `stable` when RHOAI 3.2 is released. See [platform/rhoai-operator/README.md](platform/rhoai-operator/README.md) for configuration details.
+After activation, you can use an IDE like VSCode (or run Jupyter) to execute the `platform-deployment.ipynb` notebook.
 
-### 3. Deploy GPU Nodes (AWS)
+## Deployment
 
-**Most demos require GPU nodes for model inference.** Deploy GPU infrastructure before running demos.
+See **[platform-deployment.ipynb](platform-deployment.ipynb)** for step-by-step deployment commands:
 
-#### Step 3a: Auto-Detect Cluster Configuration
+1. Install OpenShift GitOps (ArgoCD)
+2. Install RHOAI 3.x with dependencies (NFD, Kueue)
+3. Deploy GPU nodes (AWS)
+4. Download and deploy models
 
-This step creates a ConfigMap with your cluster's AWS-specific information (cluster name, region, availability zone). The GPU MachineSet will use this to configure itself automatically:
+After deployment, see **[DEMO-GUIDE.md](DEMO-GUIDE.md)** for available demos.
 
-```bash
-# Deploy the cluster-info detection job via GitOps
-oc apply -f gitops/infra/cluster-info-aws.yaml
-
-# Wait for detection to complete (30-60 seconds)
-oc wait --for=condition=complete job/generate-cluster-info-aws \
-  -n openshift-machine-api --timeout=60s
-
-# Verify the detected configuration
-oc get configmap cluster-info-aws -n openshift-machine-api -o yaml
-```
-
-
-
-#### Step 3b: Deploy GPU Nodes
-
-```bash
-# For AWS g6.2xlarge (1x NVIDIA L4, 8 vCPU, 32GB RAM, ~$1.10/hr)
-oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
-
-# For AWS g6.4xlarge (1x NVIDIA L4, 16 vCPU, 64GB RAM, ~$2.15/hr)
-# oc apply -f gitops/infra/gpu-machineset-aws-g5.yaml
-
-# Wait for GPU node to be Ready (5-10 minutes)
-oc get nodes -l nvidia.com/gpu.present=true -w
-```
-
-**Verify GPU deployment:**
-
-```bash
-# Check MachineSet was created
-oc get machineset -n openshift-machine-api | grep gpu
-
-# Check Machine is provisioning
-oc get machine -n openshift-machine-api | grep gpu
-
-# Verify GPU node is Ready
-oc get nodes -l nvidia.com/gpu.present=true
-
-# Check GPU detection
-oc describe node <gpu-node-name> | grep -i gpu
-```
-
-**Cost Management Tip:** Scale down GPU nodes when not in use:
-
-```bash
-# Scale down to 0 nodes
-oc scale machineset <machineset-name> --replicas=0 -n openshift-machine-api
-
-# Scale back up when needed
-oc scale machineset <machineset-name> --replicas=1 -n openshift-machine-api
-```
-
-**Optional: Customize GPU Configuration**
-
-If you need to adjust the number of replicas or other settings, you can modify parameters locally without committing to Git. See [infra/gpu-machineset/README.md](infra/gpu-machineset/README.md) for customization options and troubleshooting.
-
-### 4. Download and Deploy Models
-
-**Most demos require at least one model to be deployed.** Choose and deploy the models you need to support specific demos.
-
-#### Available Models
+## Available Models
 
 | Model | Size | HuggingFace Token | Notes |
 |-------|------|-------------------|-------|
@@ -151,120 +72,30 @@ If you need to adjust the number of replicas or other settings, you can modify p
 | Granite 7B | ~14GB | Optional | IBM's open instruction model |
 | Llama 3 8B | ~16GB | Required | Requires license acceptance on HuggingFace |
 
-#### Step 4a: Download Model (10-30 min)
+## Common Operations
 
-Create HuggingFace token secret (optional step for some models):
-
+**GPU Node Management:**
 ```bash
-# Create HuggingFace token secret
-read -sp "Enter HuggingFace token: " HF_TOKEN
-echo
+# Scale down GPU nodes when not in use
+oc scale machineset <machineset-name> --replicas=0 -n openshift-machine-api
 
-oc create namespace demo --dry-run=client -o yaml | oc apply -f -
-oc create secret generic huggingface-token \
-  --from-literal=token=${HF_TOKEN} \
-  -n demo
+# Scale back up when needed
+oc scale machineset <machineset-name> --replicas=1 -n openshift-machine-api
 ```
 
-Deploy your chosen model:
-
+**Model Management:**
 ```bash
-# Choose one:
-# Qwen3-VL 8B (recommended for most demos)
-oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
+# Stop a model (releases GPU)
+oc patch inferenceservice <model-name> -n demo \
+  --type=merge -p '{"metadata":{"annotations":{"serving.kserve.io/stop":"true"}}}'
 
-# Granite 7B
-# oc apply -f gitops/platform/models/granite-7b-pvc.yaml
+# Start a model
+oc patch inferenceservice <model-name> -n demo \
+  --type=merge -p '{"metadata":{"annotations":{"serving.kserve.io/stop":"false"}}}'
 
-# Llama 3 8B (requires license acceptance at https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
-# oc apply -f gitops/platform/models/llama-3-8b-pvc.yaml
-
-# Wait for ArgoCD application to be ready
-oc wait --for=condition=Ready application/model-qwen3-vl-8b-pvc \
-  -n openshift-gitops --timeout=180s
-
-# Monitor the download job progress
-oc logs -f job/download-qwen3-vl-8b -n demo
-
-# Verify PVC was created and is bound
-oc get pvc -n demo
+# List inference services
+oc get inferenceservice -n demo
 ```
-
-**✓ Verify:**
-- Job shows `COMPLETIONS: 1/1`
-- PVC shows `Bound` status
-
-#### Step 4b: Deploy Model Serving (3-5 min)
-
-Deploy the ServingRuntime and InferenceService for your chosen model via GitOps. This will deploy both the vLLM serving runtime and configure the model to be accessible in the RHOAI dashboard:
-
-```bash
-# Choose one:
-# Qwen3-VL 8B (recommended for most demos)
-oc apply -f gitops/platform/models/qwen3-vl-8b-serving.yaml
-
-# Granite 7B
-# oc apply -f gitops/platform/models/granite-7b-serving.yaml
-
-# Llama 3 8B
-# oc apply -f gitops/platform/models/llama-3-8b-serving.yaml
-
-# Wait for ArgoCD application to be ready
-oc wait --for=condition=Ready application/model-qwen3-vl-8b-serving \
-  -n openshift-gitops --timeout=180s
-
-# Wait for InferenceService to be ready (5-10 minutes for GPU node scheduling and model loading)
-oc wait --for=condition=Ready inferenceservice/qwen3-vl-8b \
-  -n demo --timeout=600s
-```
-
-**✓ Verify:**
-- ArgoCD Application shows `Synced` and `Healthy`
-- InferenceService shows `READY=True`
-- Model appears in RHOAI dashboard
-
-**Test the model:**
-```bash
-# Get the inference endpoint
-INFERENCE_URL=$(oc get inferenceservice qwen3-vl-8b -n demo -o jsonpath='{.status.url}')
-
-# Test the model
-oc run curl-test --image=curlimages/curl -it --rm -n demo -- \
-  curl -X POST http://qwen3-vl-8b-predictor.demo.svc.cluster.local/v1/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "qwen3-vl-8b", "prompt": "Hello", "max_tokens": 50}'
-```
-
-### 5. Choose a Demo
-
-See **[DEMO-GUIDE.md](DEMO-GUIDE.md)** for available demos with complete deployment instructions.
-
-Example: [AnythingLLM RAG Demo](demos/anythingllm-rag-demo/README.md) - Document chat with RHOAI backend (15-20 min with model already deployed)
-
-## RHOAI 3.x Information
-
-This repository is configured for **Red Hat OpenShift AI (RHOAI) 3.x**, which includes several important requirements:
-
-### Subscription Channel
-
-RHOAI 3.x is currently deployed using the **`fast-3.x`** subscription channel for early access to 3.x features. When RHOAI 3.2 is released, the recommended channel will be **`stable`**.
-
-The channel can be configured in [`platform/rhoai-operator/base/kustomization.yaml`](platform/rhoai-operator/base/kustomization.yaml).
-
-### Required Dependencies
-
-RHOAI 3.x requires these operators to be installed before deployment:
-
-1. **Node Feature Discovery (NFD) Operator** - Detects hardware features, essential for GPU discovery
-2. **Red Hat Build for Kueue Operator** - Provides job queuing and resource management
-
-### Optional Dependencies
-
-For enhanced GPU support:
-
-3. **NVIDIA DCGM Operator** - GPU monitoring and health checks (recommended for NVIDIA GPU clusters)
-
-All dependencies are automatically installed when using the GitOps Application. For manual installation or more details, see [platform/rhoai-operator/README.md](platform/rhoai-operator/README.md).
 
 ## Repository Structure
 
@@ -297,48 +128,12 @@ Components are organized in layers:
 
 See [gitops/README.md](gitops/README.md) for the complete catalog.
 
-## Configuration Examples
+## Additional Information
 
-Quick examples for common customizations. See component READMEs for details.
-
-### GPU Instance Types
-
-```bash
-
-# g6.2xlarge (1x NVIDIA L4, 8 vCPU, 32GB RAM)
-oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
-
-# g6.4xlarge (1x NVIDIA L4, 16 vCPU, 64GB RAM)  
-# oc apply -f gitops/infra/gpu-machineset-aws-g5.yaml
-```
-
-### Storage Options
-
-```bash
-# PVC storage (simpler)
-oc apply -f gitops/infra/storage-pvc.yaml
-
-# MinIO storage (S3-compatible)
-oc apply -f gitops/infra/storage-minio.yaml
-```
-
-### Model Selection
-
-```bash
-# Qwen3-VL 8B (multimodal)
-oc apply -f gitops/platform/models/qwen3-vl-8b-pvc.yaml
-
-# Granite 7B
-oc apply -f gitops/platform/models/granite-7b-pvc.yaml
-
-# Llama 3 8B
-oc apply -f gitops/platform/models/llama-3-8b-pvc.yaml
-```
-
-See component-specific READMEs for detailed configuration options:
-- [GPU MachineSet Configuration](infra/gpu-machineset/README.md)
-- [Model Downloads](platform/models/README.md)
-- [Secrets Management](secrets/README.md)
+- **RHOAI Version**: This repo uses RHOAI 3.x with the `fast-3.x` subscription channel
+- **GPU Support**: AWS g6.2xlarge (NVIDIA L4) by default. See [infra/gpu-machineset/README.md](infra/gpu-machineset/README.md) for other instance types
+- **Dependencies**: NFD and Kueue operators are automatically installed with RHOAI
+- **Configuration**: See component-specific READMEs for customization options
 
 ## Contributing
 
