@@ -1,0 +1,9 @@
+[project]
+name = "rhoai-app-demos"
+version = "0.1.0"
+description = "RHOAI platform with 3rd-party AI apps demos"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jupyter>=1.1.1",
+]
