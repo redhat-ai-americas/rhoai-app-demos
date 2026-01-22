@@ -84,6 +84,25 @@ echo "Password: ${ARGOCD_PASSWORD}"
 open "https://${ARGOCD_URL}"
 ```
 
+## Using ArgoCD CLI
+
+The ArgoCD instance uses **passthrough TLS termination** to support CLI access.
+
+```bash
+# Install CLI (macOS)
+brew install argocd
+
+# Login with OpenShift SSO
+ARGOCD_SERVER=$(oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}')
+argocd login $ARGOCD_SERVER --sso --insecure
+```
+
+**Optional**: Remove `--insecure` flag by configuring cert-manager certificates:
+```bash
+# Requires: cert-manager operator with a ClusterIssuer (e.g., Let's Encrypt)
+./platform/gitops-operator/instance/generate-certificate.sh
+```
+
 ## After Installation
 
 Once GitOps is installed, you can deploy all other components using ArgoCD Applications:

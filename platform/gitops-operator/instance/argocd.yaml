@@ -22,7 +22,7 @@ spec:
     route:
       enabled: true
       tls:
-        termination: reencrypt
+        termination: passthrough
         insecureEdgeTerminationPolicy: Redirect
     service:
       type: ClusterIP
