@@ -1,0 +1,90 @@
+{{- if .Values.chromadb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chromadb
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: chromadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chromadb
+  template:
+    metadata:
+      labels:
+        app: chromadb
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: fix-permissions
+          image: "{{ .Values.chromadb.image.repository }}:{{ .Values.chromadb.image.tag }}"
+          command: ['sh', '-c', 'mkdir -p /chroma/chroma && chown -R 1000:1000 /chroma/chroma && chmod -R 755 /chroma/chroma']
+          volumeMounts:
+            - name: chroma-storage
+              mountPath: /chroma/chroma
+          securityContext:
+            runAsUser: 0
+      containers:
+        - name: chromadb
+          image: "{{ .Values.chromadb.image.repository }}:{{ .Values.chromadb.image.tag }}"
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: IS_PERSISTENT
+              value: "TRUE"
+            - name: PERSIST_DIRECTORY
+              value: "/chroma/chroma"
+            - name: ANONYMIZED_TELEMETRY
+              value: "FALSE"
+          volumeMounts:
+            - name: chroma-storage
+              mountPath: /chroma/chroma
+          resources:
+{{- toYaml .Values.chromadb.resources | nindent 12 }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: chroma-storage
+          persistentVolumeClaim:
+            claimName: chromadb-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chromadb
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: chromadb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: chromadb
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chromadb-storage
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: chromadb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.chromadb.storage.size }}
+{{- end }}

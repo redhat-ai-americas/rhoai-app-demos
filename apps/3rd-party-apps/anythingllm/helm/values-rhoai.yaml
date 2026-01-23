@@ -1,0 +1,66 @@
+# RHOAI-specific overrides for AnythingLLM
+# This file configures AnythingLLM to use RHOAI for LLM and embeddings
+
+namespace: anythingllm
+
+# LLM configuration pointing to RHOAI InferenceService
+llm:
+  provider: "generic-openai"  # OpenAI-compatible API
+  # UPDATE THIS: Replace with your actual RHOAI InferenceService URL
+  # Example: http://granite-7b-predictor.my-project.svc.cluster.local/v1
+  baseUrl: "http://RHOAI_INFERENCE_SERVICE_URL/v1"
+  model: "granite-7b-instruct"  # Model name
+  # API key is optional for internal cluster access
+  apiKey: ""
+
+# Embedding configuration
+embedding:
+  provider: "generic-openai"
+  # UPDATE THIS: Replace with your RHOAI embedding model endpoint
+  # Can use same model or different embedding-specific model
+  baseUrl: "http://RHOAI_EMBEDDING_SERVICE_URL/v1"
+  model: "granite-7b-instruct"
+  apiKey: ""
+
+# Environment variables for AnythingLLM
+env:
+  # OpenAI API compatibility mode
+  - name: LLM_PROVIDER
+    value: "generic-openai"
+  - name: GENERIC_OPEN_AI_BASE_PATH
+    value: "http://RHOAI_INFERENCE_SERVICE_URL/v1"
+  - name: GENERIC_OPEN_AI_MODEL_PREF
+    value: "granite-7b-instruct"
+  - name: GENERIC_OPEN_AI_MODEL_TOKEN_LIMIT
+    value: "8192"
+  # Embedding configuration
+  - name: EMBEDDING_ENGINE
+    value: "generic-openai"
+  - name: EMBEDDING_BASE_PATH
+    value: "http://RHOAI_EMBEDDING_SERVICE_URL/v1"
+  - name: EMBEDDING_MODEL_PREF
+    value: "granite-7b-instruct"
+  # Vector database
+  - name: VECTOR_DB
+    value: "chroma"
+  - name: CHROMA_ENDPOINT
+    value: "http://chromadb:8000"
+  # Disable telemetry
+  - name: DISABLE_TELEMETRY
+    value: "true"
+
+# Deploy ChromaDB alongside AnythingLLM
+chromadb:
+  enabled: true
+  image:
+    repository: chromadb/chroma
+    tag: latest
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  storage:
+    size: 20Gi

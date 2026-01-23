@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anythingllm
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: anythingllm
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: anythingllm
+  template:
+    metadata:
+      labels:
+        app: anythingllm
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: fix-permissions
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ['sh', '-c', 'mkdir -p /app/server/storage && chown -R 1000:1000 /app/server/storage && chmod -R 755 /app/server/storage']
+          volumeMounts:
+            - name: storage
+              mountPath: /app/server/storage
+          securityContext:
+            runAsUser: 0
+      containers:
+        - name: anythingllm
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3001
+              name: http
+          env:
+            - name: STORAGE_DIR
+              value: "/app/server/storage"
+{{- if .Values.env }}
+{{- toYaml .Values.env | nindent 12 }}
+{{- end }}
+          volumeMounts:
+            - name: storage
+              mountPath: /app/server/storage
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: anythingllm-storage
