@@ -8,9 +8,9 @@ metadata:
     opendatahub.io/serving-runtime-scope: namespace
     opendatahub.io/template-display-name: vLLM NVIDIA GPU ServingRuntime for KServe
     opendatahub.io/template-name: vllm-cuda-runtime-template
-    openshift.io/display-name: Qwen3-VL-8B vLLM Runtime
+    openshift.io/display-name: Qwen3-VL-8B-FP8 vLLM Runtime
     argocd.argoproj.io/sync-wave: "4"
-  name: qwen3-vl-8b-runtime
+  name: qwen3-vl-8b-fp8-runtime
   namespace: demo
   labels:
     opendatahub.io/dashboard: 'true'

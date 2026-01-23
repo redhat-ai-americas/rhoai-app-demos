@@ -5,10 +5,10 @@ metadata:
   namespace: openshift-machine-api
   labels:
     machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
-  annotations:
-    machine.openshift.io/GPU: "{{ .Values.gpu.count }}"
-    machine.openshift.io/memoryMb: "{{ .Values.gpu.memoryMb }}"
-    machine.openshift.io/vCPU: "{{ .Values.gpu.vCPU }}"
+  # annotations:
+  #   machine.openshift.io/GPU: "{{ .Values.gpu.count }}"
+  #   machine.openshift.io/memoryMb: "{{ .Values.gpu.memoryMb }}"
+  #   machine.openshift.io/vCPU: "{{ .Values.gpu.vCPU }}"
 spec:
   replicas: {{ .Values.replicas }}
   selector:
