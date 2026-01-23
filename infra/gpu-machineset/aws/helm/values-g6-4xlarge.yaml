@@ -10,3 +10,8 @@ rootVolume:
   size: 120
   type: gp3
   iops: 3000
+
+gpu:
+  count: 1
+  memoryMb: 65536
+  vCPU: 16

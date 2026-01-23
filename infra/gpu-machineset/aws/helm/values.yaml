@@ -19,13 +19,15 @@ rootVolume:
   iops: 3000
 
 # GPU node configuration
-labels:
-  node-role.kubernetes.io/gpu: ""
-  nvidia.com/gpu.present: "true"
+# Resource specifications for annotations
+gpu:
+  count: 1           # Number of GPUs
+  memoryMb: 32768   # RAM in MB (32GB for g6.2xlarge, 65536 for g6.4xlarge)
+  vCPU: 8           # vCPUs (8 for g6.2xlarge, 16 for g6.4xlarge)
 
 taints:
   - key: nvidia.com/gpu
-    value: "true"
+    value: ""
     effect: NoSchedule
 
 # GPU instance type details:

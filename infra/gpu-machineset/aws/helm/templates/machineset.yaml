@@ -5,6 +5,10 @@ metadata:
   namespace: openshift-machine-api
   labels:
     machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
+  annotations:
+    machine.openshift.io/GPU: "{{ .Values.gpu.count }}"
+    machine.openshift.io/memoryMb: "{{ .Values.gpu.memoryMb }}"
+    machine.openshift.io/vCPU: "{{ .Values.gpu.vCPU }}"
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -18,13 +22,8 @@ spec:
         machine.openshift.io/cluster-api-machine-role: worker
         machine.openshift.io/cluster-api-machine-type: worker
         machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
-        node-role.kubernetes.io/gpu: ""
     spec:
-      metadata:
-        labels:
-          {{- range $key, $value := .Values.labels }}
-          {{ $key }}: {{ $value | quote }}
-          {{- end }}
+      metadata: {}
       taints:
         {{- toYaml .Values.taints | nindent 8 }}
       providerSpec:
@@ -36,10 +35,14 @@ spec:
             id: {{ .Values.amiId | quote }}
           blockDevices:
             - ebs:
+                encrypted: true
                 volumeSize: {{ .Values.rootVolume.size }}
                 volumeType: {{ .Values.rootVolume.type }}
+                {{- if eq .Values.rootVolume.type "gp3" }}
                 iops: {{ .Values.rootVolume.iops }}
-              deviceName: /dev/sda1
+                {{- else }}
+                iops: 0
+                {{- end }}
           placement:
             availabilityZone: {{ .Values.availabilityZone }}
             region: {{ .Values.region }}
