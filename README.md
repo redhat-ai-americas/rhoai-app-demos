@@ -61,8 +61,9 @@ See **[platform-deployment.ipynb](platform-deployment.ipynb)** for step-by-step 
 
 1. Install OpenShift GitOps (ArgoCD)
 2. Install RHOAI 3.x with dependencies (NFD, Kueue)
-3. Deploy GPU nodes (AWS)
-4. Download and deploy models
+3. Install NVIDIA GPU Operator
+4. Deploy GPU nodes (AWS)
+5. Download and deploy models
 
 After deployment, see **[DEMO-GUIDE.md](DEMO-GUIDE.md)** for available demos.
 

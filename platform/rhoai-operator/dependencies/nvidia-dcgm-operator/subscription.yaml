@@ -3,9 +3,12 @@ kind: Subscription
 metadata:
   name: gpu-operator-certified
   namespace: nvidia-gpu-operator
+  labels:
+    operators.coreos.com/gpu-operator-certified.nvidia-gpu-operator: ''
 spec:
-  channel: stable
+  channel: v24.9
+  installPlanApproval: Automatic
   name: gpu-operator-certified
   source: certified-operators
   sourceNamespace: openshift-marketplace
-  installPlanApproval: Automatic
+  startingCSV: gpu-operator-certified.v24.9.2

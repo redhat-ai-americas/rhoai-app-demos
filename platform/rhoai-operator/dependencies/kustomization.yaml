@@ -4,8 +4,7 @@ kind: Kustomization
 resources:
   - nfd-operator
   - kueue-operator
-  # Optional: Uncomment for NVIDIA GPU support/monitoring
-  # - nvidia-dcgm-operator
+  - nvidia-dcgm-operator
 
 # Add sync wave annotation to ensure dependencies install first
 commonAnnotations:
