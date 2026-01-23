@@ -20,25 +20,25 @@ These operators **must** be installed before RHOAI 3.x for proper functionality:
 
 ## Optional Dependencies
 
-These operators provide additional monitoring and support capabilities:
+These components provide additional monitoring capabilities:
 
-### 3. NVIDIA DCGM Operator (GPU Operator)
-- **Directory**: `nvidia-dcgm-operator/`
-- **Purpose**: Provides GPU monitoring, health checks, and telemetry for NVIDIA GPUs
-- **Namespace**: `nvidia-gpu-operator`
-- **Channel**: `stable`
-- **Source**: `certified-operators`
-- **Note**: Only needed if you're using NVIDIA GPUs and want advanced monitoring/support
+### 3. NVIDIA DCGM Dashboard
+- **Directory**: `nvidia-dcgm-dashboard/`
+- **Purpose**: Configures GPU monitoring dashboard in OpenShift console
+- **Namespace**: `openshift-config-managed`
+- **Prerequisites**: NVIDIA GPU Operator must be installed first
+- **Note**: Only needed if you're using NVIDIA GPUs and want console-based monitoring
+
+> **Note**: The NVIDIA GPU Operator is installed separately via `gitops/platform/nvidia-gpu-operator.yaml`, not as part of dependencies.
 
 ## Installation
 
-### Install All Required Dependencies
+### Install All Dependencies via GitOps
 
 ```bash
-oc apply -k platform/rhoai-operator/dependencies/
+# Install RHOAI dependencies (NFD, Kueue, DCGM Dashboard)
+oc apply -f gitops/platform/rhoai-dependencies.yaml
 ```
-
-This will install NFD and Kueue operators. To also install the NVIDIA DCGM operator, uncomment it in the `kustomization.yaml` file.
 
 ### Install Individual Dependencies
 
@@ -49,8 +49,8 @@ oc apply -k platform/rhoai-operator/dependencies/nfd-operator/
 # Kueue Operator
 oc apply -k platform/rhoai-operator/dependencies/kueue-operator/
 
-# NVIDIA DCGM Operator (optional)
-oc apply -k platform/rhoai-operator/dependencies/nvidia-dcgm-operator/
+# NVIDIA DCGM Dashboard (requires GPU operator to be installed first)
+oc apply -k platform/rhoai-operator/dependencies/nvidia-dcgm-dashboard/
 ```
 
 ### Wait for Operators to Be Ready
@@ -64,37 +64,22 @@ oc wait --for=condition=Ready pod -l app=nfd-master \
 oc wait --for=condition=Ready pod -l control-plane=controller-manager \
   -n openshift-kueue --timeout=300s
 
-# Wait for NVIDIA operator (if installed)
-oc wait --for=condition=Ready pod -l app=gpu-operator \
-  -n nvidia-gpu-operator --timeout=300s
+# Verify DCGM Dashboard Job completed (if installed)
+oc get job nvidia-dcgm-dashboard-setup -n openshift-config-managed
 ```
 
 ## Deployment Order
 
-For a complete RHOAI deployment, follow this order:
+For a complete RHOAI deployment with GPU support, follow this order:
 
-1. **Dependencies** (this directory) - Install NFD and Kueue
-2. **RHOAI Operator** - Install the RHOAI operator subscription
-3. **DataScienceCluster** - Deploy the RHOAI instance
+1. **OpenShift GitOps** - Install ArgoCD first
+2. **RHOAI Dependencies** - Install NFD and Kueue
+3. **RHOAI Operator** - Install the RHOAI operator subscription
+4. **NVIDIA GPU Operator** - Install GPU support (if using GPUs)
+5. **GPU Infrastructure** - Deploy GPU nodes (AWS/Azure/etc)
+6. **NVIDIA DCGM Dashboard** - Configure GPU monitoring (optional)
 
-Example:
-```bash
-# 1. Install dependencies
-oc apply -k platform/rhoai-operator/dependencies/
-
-# Wait for dependencies to be ready
-sleep 120
-
-# 2. Install RHOAI operator
-oc apply -k platform/rhoai-operator/base/
-
-# Wait for RHOAI operator
-oc wait --for=condition=Ready pod -l name=rhods-operator \
-  -n redhat-ods-operator --timeout=600s
-
-# 3. Deploy DataScienceCluster
-oc apply -k platform/rhoai-operator/instance/
-```
+See `platform-deployment.ipynb` for the complete interactive deployment walkthrough.
 
 ## Version Notes
 

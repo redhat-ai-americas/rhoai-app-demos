@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - nfd-operator
   - kueue-operator
-  - nvidia-dcgm-operator
+  - nvidia-dcgm-dashboard
 
 # Add sync wave annotation to ensure dependencies install first
 commonAnnotations:
