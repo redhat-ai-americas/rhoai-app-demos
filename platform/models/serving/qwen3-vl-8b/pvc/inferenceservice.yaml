@@ -25,6 +25,14 @@ spec:
     maxReplicas: 1
     minReplicas: 1
     model:
+      args:
+        # set conservatively for L4 on g6.2xlarge
+        - '--max-model-len=40000'
+        - 'max_num_batched_tokens=1024'
+        - '--gpu_memory_utilization=0.97'
+        - '--limit-mm-per-prompt.video=0'
+        - '--limit-mm-per-prompt.image=3'
+        - '--swap-space=4'
       modelFormat:
         name: vLLM
       name: ''
