@@ -1,0 +1,42 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: anythingllm-scc
+  annotations:
+    kubernetes.io/description: "SCC for AnythingLLM and ChromaDB pods that need specific UIDs"
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: []
+defaultAddCapabilities: []
+fsGroup:
+  type: MustRunAs
+  ranges:
+    - min: 1
+      max: 65535
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+  - KILL
+  - MKNOD
+  - SETUID
+  - SETGID
+runAsUser:
+  type: MustRunAsRange
+  uidRangeMin: 1
+  uidRangeMax: 65535
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+priority: 10
