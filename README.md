@@ -53,8 +53,6 @@ source .venv/bin/activate  # On macOS/Linux
 .venv\Scripts\activate     # On Windows
 ```
 
-After activation, you can use an IDE like VSCode (or run Jupyter) to execute the `platform-deployment.ipynb` notebook.
-
 ## Deployment
 
 See **[platform-deployment.ipynb](platform-deployment.ipynb)** for step-by-step deployment commands:
