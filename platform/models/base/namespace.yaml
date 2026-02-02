@@ -3,6 +3,17 @@ kind: Namespace
 metadata:
   name: demo
   labels:
-    name: demo
+    kubernetes.io/metadata.name: demo
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
+    openshift.io/display-name: "Demo"
+    opendatahub.io/dashboard: "true"
+    openshift.io/requester: admin
+    openshift.io/sa.scc.mcs: 's0:c29,c14'
+    openshift.io/sa.scc.supplemental-groups: 1000840000/10000
+    openshift.io/sa.scc.uid-range: 1000840000/10000
+    security.openshift.io/MinimallySufficientPodSecurityStandard: restricted
