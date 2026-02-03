@@ -33,3 +33,10 @@ spec:
       kind: PersistentVolumeClaim
       jsonPointers:
         - /status
+    - group: "serving.kserve.io"
+      kind: InferenceService
+      jsonPointers:
+        - /metadata/annotations
+        - /metadata/labels
+        - /spec
+        - /status
