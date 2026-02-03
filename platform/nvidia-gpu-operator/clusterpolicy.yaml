@@ -3,6 +3,9 @@ kind: ClusterPolicy
 metadata:
   name: gpu-cluster-policy
   namespace: nvidia-gpu-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   operator:
     defaultRuntime: crio

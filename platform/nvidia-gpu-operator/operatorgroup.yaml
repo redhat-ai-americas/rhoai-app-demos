@@ -3,6 +3,8 @@ kind: OperatorGroup
 metadata:
   name: nvidia-gpu-operator
   namespace: nvidia-gpu-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   targetNamespaces:
     - nvidia-gpu-operator
