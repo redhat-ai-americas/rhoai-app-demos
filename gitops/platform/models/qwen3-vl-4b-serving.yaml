@@ -28,3 +28,11 @@ spec:
         duration: 10s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+    - group: "serving.kserve.io"
+      kind: InferenceService
+      jsonPointers:
+        - /metadata/annotations
+        - /metadata/labels
+        - /spec
+        - /status
