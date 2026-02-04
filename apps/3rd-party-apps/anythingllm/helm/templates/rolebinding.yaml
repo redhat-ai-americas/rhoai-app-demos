@@ -1,12 +1,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: anythingllm-scc-binding
+  name: anythingllm-anyuid-scc-binding
   namespace: {{ .Values.namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: system:openshift:scc:anythingllm-scc
+  name: system:openshift:scc:anyuid
 subjects:
   - kind: ServiceAccount
     name: anythingllm
