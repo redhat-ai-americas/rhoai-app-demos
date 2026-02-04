@@ -16,15 +16,10 @@ spec:
         app: anythingllm
     spec:
       serviceAccountName: anythingllm
-      securityContext:
-        fsGroup: 1001
       containers:
         - name: anythingllm
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            runAsUser: 1001
-            runAsNonRoot: true
           ports:
             - containerPort: 3001
               name: http
