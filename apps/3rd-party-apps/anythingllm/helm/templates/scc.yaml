@@ -3,7 +3,7 @@ kind: SecurityContextConstraints
 metadata:
   name: anythingllm-scc
   annotations:
-    kubernetes.io/description: "SCC for AnythingLLM and ChromaDB pods that need specific UIDs"
+    kubernetes.io/description: "SCC for AnythingLLM and ChromaDB pods running as UID 1001"
 allowHostDirVolumePlugin: false
 allowHostIPC: false
 allowHostNetwork: false
@@ -25,9 +25,7 @@ requiredDropCapabilities:
   - SETUID
   - SETGID
 runAsUser:
-  type: MustRunAsRange
-  uidRangeMin: 1
-  uidRangeMax: 65535
+  type: RunAsAny
 seLinuxContext:
   type: MustRunAs
 supplementalGroups:

@@ -17,9 +17,14 @@ spec:
         app: chromadb
     spec:
       serviceAccountName: anythingllm
+      securityContext:
+        fsGroup: 1001
       containers:
         - name: chromadb
           image: "{{ .Values.chromadb.image.repository }}:{{ .Values.chromadb.image.tag }}"
+          securityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
           ports:
             - containerPort: 8000
               name: http
