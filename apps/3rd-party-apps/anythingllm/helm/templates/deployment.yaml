@@ -16,6 +16,8 @@ spec:
         app: anythingllm
     spec:
       serviceAccountName: anythingllm
+      securityContext:
+        fsGroup: 0
       containers:
         - name: anythingllm
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
