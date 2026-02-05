@@ -1,7 +1,7 @@
 # RHOAI-specific overrides for AnythingLLM
 # This file configures AnythingLLM to use RHOAI for LLM and embeddings
 
-namespace: anythingllm
+namespace: demo-apps
 
 # LLM configuration pointing to RHOAI InferenceService
 llm:
@@ -46,6 +46,10 @@ env:
   # Disable telemetry
   - name: DISABLE_TELEMETRY
     value: "true"
+  # Disable TLS certificate validation for internal cluster services
+  # This allows AnythingLLM to connect to RHOAI InferenceServices with self-signed certs
+  - name: NODE_TLS_REJECT_UNAUTHORIZED
+    value: "0"
 
 # ChromaDB is disabled - using built-in LanceDB instead
 chromadb:

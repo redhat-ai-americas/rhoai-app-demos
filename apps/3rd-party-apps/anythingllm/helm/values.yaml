@@ -1,5 +1,5 @@
 # Default values for AnythingLLM
-namespace: anythingllm
+namespace: demo-apps
 
 image:
   repository: mintplexlabs/anythingllm
