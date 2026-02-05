@@ -40,27 +40,13 @@ env:
     value: "http://RHOAI_EMBEDDING_SERVICE_URL/v1"
   - name: EMBEDDING_MODEL_PREF
     value: "granite-7b-instruct"
-  # Vector database
+  # Vector database - using built-in LanceDB
   - name: VECTOR_DB
-    value: "chroma"
-  - name: CHROMA_ENDPOINT
-    value: "http://chromadb:8000"
+    value: "lancedb"
   # Disable telemetry
   - name: DISABLE_TELEMETRY
     value: "true"
 
-# Deploy ChromaDB alongside AnythingLLM
+# ChromaDB is disabled - using built-in LanceDB instead
 chromadb:
-  enabled: true
-  image:
-    repository: chromadb/chroma
-    tag: latest
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "1"
-      memory: "2Gi"
-  storage:
-    size: 20Gi
+  enabled: false

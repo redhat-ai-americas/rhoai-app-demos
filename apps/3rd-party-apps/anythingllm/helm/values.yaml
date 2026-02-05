@@ -27,7 +27,7 @@ storage:
 
 # Vector database configuration
 vectorDatabase:
-  type: "chroma"  # chroma, pinecone, weaviate, etc.
+  type: "lancedb"  # Built-in LanceDB (default), or chroma, pinecone, weaviate, etc.
   
 # LLM configuration (will be overridden by values-rhoai.yaml)
 llm:

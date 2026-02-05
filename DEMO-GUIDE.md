@@ -31,7 +31,7 @@ Quick reference for available demos, their prerequisites, and getting started.
 - RHOAI operator and DataScienceCluster
 - GPU-enabled node
 - Qwen3-VL 8B multimodal model (or Granite 7B, Llama 3 8B)
-- AnythingLLM + ChromaDB
+- AnythingLLM (with built-in LanceDB vector database)
 - PVC or MinIO storage
 
 **Get Started**: 
