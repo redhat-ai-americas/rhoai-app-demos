@@ -33,7 +33,9 @@ spec:
         - '--gpu_memory_utilization=0.95'
         - '--limit-mm-per-prompt.video=0'
         - '--limit-mm-per-prompt.image=8'
-        - '--swap-space=4'
+        - '--enable-auto-tool-choice'
+        - '--tool-call-parser=hermes'  # openai, hermes
+        # - '--swap-space=4'
       modelFormat:
         name: vLLM
       name: ''
