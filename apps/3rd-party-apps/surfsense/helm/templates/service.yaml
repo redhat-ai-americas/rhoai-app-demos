@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: surfsense
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: surfsense
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.frontendPort }}
+      targetPort: frontend
+      protocol: TCP
+      name: frontend
+    - port: {{ .Values.service.backendPort }}
+      targetPort: backend
+      protocol: TCP
+      name: backend
+    - port: {{ .Values.service.electricPort }}
+      targetPort: electric
+      protocol: TCP
+      name: electric
+  selector:
+    app: surfsense

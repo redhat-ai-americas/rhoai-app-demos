@@ -1,0 +1,122 @@
+# RHOAI-specific overrides for SurfSense
+# This file configures SurfSense to use RHOAI for LLM and embeddings
+#
+# IMPORTANT: These are PLACEHOLDER values. 
+# For GitOps deployment, update the Helm parameters in gitops/apps/surfsense.yaml
+# For Helm deployment, override these values using --set flags
+#
+# Example:
+#   helm install surfsense ./helm \
+#     --set llm.baseUrl="http://granite-7b-predictor.demo-models.svc.cluster.local/v1" \
+#     --set llm.model="granite-7b-instruct" \
+#     -f values-rhoai.yaml
+
+namespace: demo-apps
+
+# LLM configuration pointing to RHOAI InferenceService
+llm:
+  provider: "openai"  # OpenAI-compatible API
+  # REQUIRED: Replace with your actual RHOAI InferenceService URL
+  # Find yours with: oc get inferenceservice -A
+  # Format: http://<model-name>-predictor.<namespace>.svc.cluster.local/v1
+  baseUrl: "http://REPLACE_WITH_YOUR_INFERENCE_SERVICE_URL/v1"
+  # Model name as configured in your InferenceService
+  model: "granite-7b-instruct"
+  # API key - optional for internal cluster access, required for external endpoints
+  apiKey: ""
+
+# Embedding configuration
+embedding:
+  provider: "openai"
+  # REQUIRED: Replace with your RHOAI embedding model endpoint
+  # Can use same model as LLM or a dedicated embedding model
+  baseUrl: "http://REPLACE_WITH_YOUR_INFERENCE_SERVICE_URL/v1"
+  model: "granite-7b-instruct"
+
+# Document processing with Docling (IBM open-source, no API key needed)
+etl:
+  service: "DOCLING"
+
+# Web search with SearXNG (open-source, self-hosted)
+webSearch:
+  enabled: true
+  provider: "searxng"
+
+# Authentication - use LOCAL for simplicity, or GOOGLE for OAuth
+auth:
+  type: "LOCAL"
+  registrationEnabled: true
+
+# Environment variables for SurfSense
+env:
+  # Disable TLS certificate validation for internal cluster services
+  # This allows SurfSense to connect to RHOAI InferenceServices with self-signed certs
+  - name: NODE_TLS_REJECT_UNAUTHORIZED
+    value: "0"
+  
+  # Optional: Enable detailed logging for debugging
+  - name: LOG_LEVEL
+    value: "info"
+  
+  # Optional: LangSmith observability (requires LangSmith API key)
+  # - name: LANGCHAIN_TRACING_V2
+  #   value: "true"
+  # - name: LANGCHAIN_API_KEY
+  #   value: "your-langsmith-api-key"
+
+# Resource adjustments for RHOAI environment
+resources:
+  requests:
+    cpu: "1"
+    memory: "2Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# PostgreSQL resources
+postgresql:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  storage:
+    size: 20Gi
+
+# Redis resources
+redis:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# Docling resources (adjust based on usage)
+docling:
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# SearXNG resources
+searxng:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+# Storage configuration
+storage:
+  size: 10Gi
+  # Optionally specify storage class if not using default
+  # storageClassName: "ocs-storagecluster-cephfs"

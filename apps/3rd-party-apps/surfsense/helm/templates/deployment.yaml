@@ -1,0 +1,199 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: surfsense
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: surfsense
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: surfsense
+  template:
+    metadata:
+      labels:
+        app: surfsense
+    spec:
+      serviceAccountName: surfsense
+      securityContext:
+        fsGroup: 0
+      initContainers:
+        # Wait for PostgreSQL to be ready
+        - name: wait-for-postgres
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgresql-service 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+        # Wait for Redis to be ready
+        - name: wait-for-redis
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z redis-service 6379; do
+                echo "Waiting for Redis..."
+                sleep 2
+              done
+              echo "Redis is ready!"
+      containers:
+        - name: oauth-proxy
+          image: quay.io/openshift/origin-oauth-proxy:4.15
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8443
+              name: oauth-proxy
+          args:
+            - --http-address=:8443
+            - --https-address=
+            - --provider=openshift
+            - --openshift-service-account=surfsense
+            - --upstream=http://localhost:3000
+            - --cookie-secret=SECRET
+            - --skip-provider-button=true
+        - name: surfsense
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+              name: frontend
+            - containerPort: 8000
+              name: backend
+            - containerPort: 5133
+              name: electric
+          env:
+            # Database configuration
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: postgres-password
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.postgresql.username }}:$(POSTGRES_PASSWORD)@postgresql-service:5432/{{ .Values.postgresql.database }}"
+            
+            # Redis configuration
+            - name: REDIS_URL
+              value: "redis://redis-service:6379"
+            
+            # Authentication
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: secret-key
+            - name: AUTH_TYPE
+              value: {{ .Values.auth.type | quote }}
+            - name: REGISTRATION_ENABLED
+              value: {{ .Values.auth.registrationEnabled | quote }}
+{{- if eq .Values.auth.type "GOOGLE" }}
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: google-client-id
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: google-client-secret
+{{- end }}
+            
+            # URLs
+            - name: NEXT_FRONTEND_URL
+              value: "http://localhost:3000"
+            - name: BACKEND_URL
+              value: "http://localhost:8000"
+            
+            # Document processing (Docling)
+            - name: ETL_SERVICE
+              value: {{ .Values.etl.service | quote }}
+{{- if .Values.docling.enabled }}
+            - name: DOCLING_URL
+              value: "http://docling-service:{{ .Values.docling.port }}"
+{{- end }}
+            
+            # LLM configuration
+            - name: LLM_PROVIDER
+              value: {{ .Values.llm.provider | quote }}
+{{- if .Values.llm.baseUrl }}
+            - name: OPENAI_API_BASE
+              value: {{ .Values.llm.baseUrl | quote }}
+{{- end }}
+{{- if .Values.llm.model }}
+            - name: LLM_MODEL
+              value: {{ .Values.llm.model | quote }}
+{{- end }}
+{{- if .Values.llm.apiKey }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: llm-api-key
+{{- end }}
+            
+            # Embedding configuration
+            - name: EMBEDDING_PROVIDER
+              value: {{ .Values.embedding.provider | quote }}
+{{- if .Values.embedding.baseUrl }}
+            - name: OPENAI_EMBEDDING_BASE
+              value: {{ .Values.embedding.baseUrl | quote }}
+{{- end }}
+{{- if .Values.embedding.model }}
+            - name: EMBEDDING_MODEL
+              value: {{ .Values.embedding.model | quote }}
+{{- end }}
+            
+            # Web search configuration
+{{- if .Values.webSearch.enabled }}
+            - name: WEB_SEARCH_ENABLED
+              value: "true"
+{{- if eq .Values.webSearch.provider "searxng" }}
+            - name: SEARXNG_URL
+              value: "http://searxng-service:{{ .Values.searxng.port }}"
+{{- else if eq .Values.webSearch.provider "tavily" }}
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: web-search-api-key
+{{- else if eq .Values.webSearch.provider "linkup" }}
+            - name: LINKUP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: surfsense-secrets
+                  key: web-search-api-key
+{{- end }}
+{{- end }}
+            
+            # Reranking configuration
+{{- if .Values.reranking.enabled }}
+            - name: RERANKERS_ENABLED
+              value: "true"
+            - name: RERANKERS_MODEL_NAME
+              value: {{ .Values.reranking.modelName | quote }}
+            - name: RERANKERS_MODEL_TYPE
+              value: {{ .Values.reranking.modelType | quote }}
+{{- end }}
+            
+            # Additional environment variables
+{{- if .Values.env }}
+{{- toYaml .Values.env | nindent 12 }}
+{{- end }}
+          volumeMounts:
+            - name: storage
+              mountPath: /data
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: surfsense-storage

@@ -1,0 +1,140 @@
+# Default values for SurfSense
+namespace: demo-apps
+
+# SurfSense main application
+image:
+  repository: ghcr.io/modsetter/surfsense
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+service:
+  type: ClusterIP
+  # SurfSense uses multiple ports
+  frontendPort: 3000
+  backendPort: 8000
+  electricPort: 5133
+
+resources:
+  requests:
+    cpu: "1"
+    memory: "2Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# Storage for SurfSense data
+storage:
+  size: 10Gi
+  storageClassName: ""  # Use default storage class
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  image:
+    repository: pgvector/pgvector
+    tag: "pg16"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  storage:
+    size: 20Gi
+    storageClassName: ""
+  database: surfsense
+  username: surfsense
+  password: ""  # Will be generated if empty
+
+# Redis configuration
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# Docling document parsing service
+docling:
+  enabled: true
+  image:
+    repository: quay.io/docling-project/docling-serve
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+  port: 5001
+
+# SearXNG web search service
+searxng:
+  enabled: true
+  image:
+    repository: searxng/searxng
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  port: 8080
+
+# Authentication configuration
+auth:
+  type: "LOCAL"  # LOCAL or GOOGLE
+  registrationEnabled: true
+  # For Google OAuth, set these values
+  googleClientId: ""
+  googleClientSecret: ""
+
+# Document processing configuration
+etl:
+  service: "DOCLING"  # DOCLING, UNSTRUCTURED, or LLAMACLOUD
+
+# LLM configuration (will be overridden by values-rhoai.yaml)
+llm:
+  provider: "openai"
+  baseUrl: ""
+  model: ""
+  apiKey: ""
+
+# Embedding configuration
+embedding:
+  provider: "openai"
+  baseUrl: ""
+  model: ""
+  apiKey: ""
+
+# Web search configuration
+webSearch:
+  enabled: true
+  provider: "searxng"  # searxng, tavily, linkup
+  # For external providers, set API key
+  apiKey: ""
+
+# Reranking configuration (optional)
+reranking:
+  enabled: false
+  modelName: ""
+  modelType: "flashrank"
+
+# Additional environment variables
+env: []

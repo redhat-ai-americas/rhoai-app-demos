@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: surfsense
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: surfsense
+    app.kubernetes.io/part-of: rhoai-demos
+    app.kubernetes.io/component: application
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-ai-americas/rhoai-app-demos.git
+    targetRevision: main
+    path: apps/3rd-party-apps/surfsense/helm
+    helm:
+      valueFiles:
+        - values-rhoai.yaml
+      # Override these parameters with your cluster-specific RHOAI endpoints
+      # Uncomment and update the values below before deploying
+      parameters:
+        # LLM Configuration
+        - name: llm.baseUrl
+          value: "http://granite-7b-predictor.demo-models.svc.cluster.local/v1"
+        - name: llm.model
+          value: "granite-7b-instruct"
+        - name: llm.apiKey
+          value: ""  # Optional - leave empty for internal cluster access
+        
+        # Embedding Configuration
+        - name: embedding.baseUrl
+          value: "http://granite-7b-predictor.demo-models.svc.cluster.local/v1"
+        - name: embedding.model
+          value: "granite-7b-instruct"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-apps
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  # Ignore differences on values that users may customize
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: surfsense-secrets
+      jsonPointers:
+        - /data
+    # Allow users to update model endpoints without ArgoCD reverting changes
+    - group: apps
+      kind: Deployment
+      name: surfsense
+      jsonPointers:
+        - /spec/template/spec/containers/1/env
+      jqPathExpressions:
+        - '.spec.template.spec.containers[1].env[] | select(.name == "OPENAI_API_BASE")'
+        - '.spec.template.spec.containers[1].env[] | select(.name == "LLM_MODEL")'
+        - '.spec.template.spec.containers[1].env[] | select(.name == "OPENAI_EMBEDDING_BASE")'
+        - '.spec.template.spec.containers[1].env[] | select(.name == "EMBEDDING_MODEL")'
+        - '.spec.template.spec.containers[1].env[] | select(.name == "OPENAI_API_KEY")'

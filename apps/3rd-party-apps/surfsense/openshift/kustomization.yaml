@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-apps
+
+resources:
+  - ../helm/templates/namespace.yaml
+  - ../helm/templates/serviceaccount.yaml
+  - ../helm/templates/rolebinding.yaml
+  - ../helm/templates/cross-namespace-rolebinding.yaml
+  - ../helm/templates/secret.yaml
+  - ../helm/templates/pvc.yaml
+  - ../helm/templates/postgres-pvc.yaml
+  - ../helm/templates/postgres-deployment.yaml
+  - ../helm/templates/postgres-service.yaml
+  - ../helm/templates/redis-deployment.yaml
+  - ../helm/templates/redis-service.yaml
+  - ../helm/templates/docling-deployment.yaml
+  - ../helm/templates/docling-service.yaml
+  - ../helm/templates/searxng-deployment.yaml
+  - ../helm/templates/searxng-service.yaml
+  - ../helm/templates/deployment.yaml
+  - ../helm/templates/service.yaml
+  - ../helm/templates/oauth-proxy-service.yaml
+  - route.yaml
+
+# Note: Helm templates need variable substitution
+# Use: helm template surfsense ../helm -f ../helm/values-rhoai.yaml | oc apply -f -
+# Or use Helm directly for deployment

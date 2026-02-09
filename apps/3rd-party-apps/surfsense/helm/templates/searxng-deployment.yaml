@@ -1,0 +1,48 @@
+{{- if .Values.searxng.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: searxng
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+    spec:
+      serviceAccountName: surfsense
+      containers:
+        - name: searxng
+          image: "{{ .Values.searxng.image.repository }}:{{ .Values.searxng.image.tag }}"
+          imagePullPolicy: {{ .Values.searxng.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.searxng.port }}
+              name: http
+          env:
+            - name: SEARXNG_BASE_URL
+              value: "http://searxng-service:{{ .Values.searxng.port }}/"
+            - name: SEARXNG_SECRET
+              value: {{ randAlphaNum 32 | quote }}
+          resources:
+{{- toYaml .Values.searxng.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.searxng.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.searxng.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+{{- end }}

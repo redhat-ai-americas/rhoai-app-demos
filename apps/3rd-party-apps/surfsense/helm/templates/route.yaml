@@ -1,0 +1,18 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: surfsense
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: surfsense
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  to:
+    kind: Service
+    name: surfsense-oauth-proxy
+  port:
+    targetPort: oauth-proxy
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

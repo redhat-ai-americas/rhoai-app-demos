@@ -1,0 +1,15 @@
+apiVersion: v2
+name: surfsense
+description: SurfSense - Open-source alternative to NotebookLM with RAG, document parsing, and web search
+type: application
+version: 1.0.0
+appVersion: "latest"
+keywords:
+  - llm
+  - rag
+  - ai
+  - research
+  - knowledge-management
+  - document-parsing
+maintainers:
+  - name: Red Hat AI Americas

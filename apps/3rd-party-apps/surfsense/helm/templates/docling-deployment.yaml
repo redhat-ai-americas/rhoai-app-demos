@@ -1,0 +1,43 @@
+{{- if .Values.docling.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docling
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: docling
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docling
+  template:
+    metadata:
+      labels:
+        app: docling
+    spec:
+      serviceAccountName: surfsense
+      containers:
+        - name: docling
+          image: "{{ .Values.docling.image.repository }}:{{ .Values.docling.image.tag }}"
+          imagePullPolicy: {{ .Values.docling.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.docling.port }}
+              name: http
+          resources:
+{{- toYaml .Values.docling.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /docs
+              port: {{ .Values.docling.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: {{ .Values.docling.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+{{- end }}
