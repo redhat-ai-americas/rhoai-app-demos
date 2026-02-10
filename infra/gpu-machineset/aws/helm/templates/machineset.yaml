@@ -1,7 +1,7 @@
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
 metadata:
-  name: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
+  name: {{ .Values.clusterName }}-gpu-{{ .Values.machineNameSuffix }}-{{ .Values.availabilityZone }}
   namespace: openshift-machine-api
   labels:
     machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
@@ -14,14 +14,16 @@ spec:
   selector:
     matchLabels:
       machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
-      machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
+      machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.machineNameSuffix }}-{{ .Values.availabilityZone }}
   template:
     metadata:
       labels:
         machine.openshift.io/cluster-api-cluster: {{ .Values.clusterName }}
         machine.openshift.io/cluster-api-machine-role: worker
         machine.openshift.io/cluster-api-machine-type: worker
-        machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.availabilityZone }}
+        machine.openshift.io/cluster-api-machineset: {{ .Values.clusterName }}-gpu-{{ .Values.machineNameSuffix }}-{{ .Values.availabilityZone }}
+        gpu-instance-type: {{ .Values.instanceType }}
+        gpu-type-suffix: {{ .Values.machineNameSuffix }}
     spec:
       metadata: {}
       taints:
@@ -67,5 +69,9 @@ spec:
               value: owned
             - name: gpu-node
               value: "true"
+            - name: gpu-instance-type
+              value: {{ .Values.instanceType }}
+            - name: gpu-type
+              value: {{ .Values.machineNameSuffix }}
           userDataSecret:
             name: worker-user-data

@@ -3,6 +3,7 @@
 # 4 vCPUs, 16 GB RAM
 # Cost: ~$0.526/hour (on-demand, us-east-1)
 
+machineNameSuffix: "g4dn"
 instanceType: g4dn.xlarge
 replicas: 1
 

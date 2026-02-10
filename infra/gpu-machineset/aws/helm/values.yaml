@@ -8,6 +8,10 @@ availabilityZone: ""  # e.g., us-east-1a
 infraID: ""      # e.g., mycluster-abc123-12345
 amiId: ""        # e.g., ami-0bc8dda494f111572 (auto-detected from existing worker nodes)
 
+# Machine naming
+# Use this to differentiate between multiple GPU machinesets in the same cluster
+machineNameSuffix: "g6"  # e.g., "g6", "g4dn", "g6-4x" - must be unique per machineset
+
 # GPU instance configuration
 instanceType: g6.2xlarge  # NVIDIA L4 GPU
 replicas: 1

@@ -3,6 +3,7 @@
 # 8 vCPUs, 32 GB RAM
 # Cost: ~$1.10/hour (on-demand, us-east-1)
 
+machineNameSuffix: "g6"
 instanceType: g6.2xlarge
 replicas: 1
 

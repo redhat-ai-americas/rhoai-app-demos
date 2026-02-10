@@ -3,6 +3,7 @@
 # 16 vCPUs, 64 GB RAM
 # Cost: ~$1.62/hour (on-demand, us-east-1)
 
+machineNameSuffix: "g6-4x"
 instanceType: g6.4xlarge
 replicas: 1
 

@@ -31,9 +31,42 @@ See cloud-specific READMEs:
 
 ### 2. Deploy via ArgoCD (Recommended)
 
+Use the deployment script to automatically configure and deploy:
+
 ```bash
-# AWS g6.2xlarge
-oc apply -f gitops/infra/gpu-machineset-aws-g6.yaml
+# Deploy with default settings (g6.2xlarge, 120GB gp3 volume)
+./infra/gpu-machineset/aws/deploy.sh
+
+# Or customize the instance type and storage
+INSTANCE_TYPE=g4dn.xlarge \
+ROOT_VOLUME_SIZE=120 \
+ROOT_VOLUME_TYPE=gp3 \
+ROOT_VOLUME_IOPS=3000 \
+./infra/gpu-machineset/aws/deploy.sh
+```
+
+**Available instance types:**
+- `g4dn.xlarge` - 1x T4 GPU, most cost-effective (~$0.53/hr)
+- `g6.2xlarge` - 1x L4 GPU, recommended for most workloads (~$1.10/hr)  
+- `g6.4xlarge` - 1x L4 GPU, high-performance (~$2.15/hr)
+
+The script will:
+1. Gather your cluster information (name, region, AZ, AMI)
+2. Login to ArgoCD
+3. Create the ArgoCD Application
+4. Set cluster-specific Helm parameters
+5. Sync the application to deploy the MachineSet
+
+**Common Examples:**
+```bash
+# Cost-effective for embedding models
+INSTANCE_TYPE=g4dn.xlarge ./infra/gpu-machineset/aws/deploy.sh
+
+# Production workload with larger storage
+INSTANCE_TYPE=g6.2xlarge ROOT_VOLUME_SIZE=200 ./infra/gpu-machineset/aws/deploy.sh
+
+# High-performance for vision models
+INSTANCE_TYPE=g6.4xlarge ./infra/gpu-machineset/aws/deploy.sh
 ```
 
 ### 3. Verify Deployment
@@ -45,8 +78,16 @@ oc get machineset -n openshift-machine-api -w
 # Wait for Machine to provision (5-10 minutes)
 oc get machine -n openshift-machine-api
 
+# View machines by instance type
+oc get machine -n openshift-machine-api -l gpu-instance-type=g4dn.xlarge
+oc get machine -n openshift-machine-api -l gpu-instance-type=g6.2xlarge
+
 # Verify GPU node is Ready
 oc get nodes -l nvidia.com/gpu.present=true
+
+# View nodes by instance type
+oc get nodes -l gpu-instance-type=g4dn.xlarge
+oc get nodes -l gpu-instance-type=g6.2xlarge
 
 # Check GPU detection
 oc describe node <gpu-node-name> | grep -i gpu
