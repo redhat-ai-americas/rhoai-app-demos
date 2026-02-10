@@ -1,0 +1,95 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openshift-machine-api
+
+resources:
+  - ../../../base
+
+patches:
+  - target:
+      kind: MachineSet
+    patch: |-
+      apiVersion: machine.openshift.io/v1beta1
+      kind: MachineSet
+      metadata:
+        name: WILL_BE_REPLACED
+      spec:
+        replicas: 1
+        template:
+          spec:
+            providerSpec:
+              value:
+                kind: AWSMachineProviderConfig
+                apiVersion: machine.openshift.io/v1beta1
+                instanceType: g4dn.xlarge
+                ami:
+                  id: ""  # Will use latest RHCOS AMI
+                blockDevices:
+                  - ebs:
+                      volumeSize: 120
+                      volumeType: gp3
+                      iops: 3000
+                deviceName: /dev/sda1
+                placement:
+                  availabilityZone: ""  # Will be replaced from cluster-info-aws ConfigMap
+                  region: ""  # Will be replaced from cluster-info-aws ConfigMap
+                securityGroups:
+                  - filters:
+                      - name: tag:Name
+                        values:
+                          - "*-worker-sg"
+                subnet:
+                  filters:
+                    - name: tag:Name
+                      values:
+                        - "*-private-*"  # Will match the subnet for the detected AZ
+                iamInstanceProfile:
+                  id: ""  # Will be auto-detected
+                tags:
+                  - name: kubernetes.io/cluster/CLUSTER_ID
+                    value: owned
+                  - name: gpu-node
+                    value: "true"
+                userDataSecret:
+                  name: worker-user-data
+
+replacements:
+  # These will be extracted from the cluster-info-aws ConfigMap
+  - source:
+      kind: ConfigMap
+      name: cluster-info-aws
+      fieldPath: data.clusterName
+    targets:
+      - select:
+          kind: MachineSet
+        fieldPaths:
+          - metadata.name
+          - metadata.labels.[machine.openshift.io/cluster-api-cluster]
+          - spec.selector.matchLabels.[machine.openshift.io/cluster-api-cluster]
+          - spec.template.metadata.labels.[machine.openshift.io/cluster-api-cluster]
+        options:
+          delimiter: "-"
+          index: 0
+  
+  # Inject availability zone from cluster-info-aws ConfigMap
+  - source:
+      kind: ConfigMap
+      name: cluster-info-aws
+      fieldPath: data.availabilityZone
+    targets:
+      - select:
+          kind: MachineSet
+        fieldPaths:
+          - spec.template.spec.providerSpec.value.placement.availabilityZone
+  
+  # Inject region from cluster-info-aws ConfigMap
+  - source:
+      kind: ConfigMap
+      name: cluster-info-aws
+      fieldPath: data.region
+    targets:
+      - select:
+          kind: MachineSet
+        fieldPaths:
+          - spec.template.spec.providerSpec.value.placement.region

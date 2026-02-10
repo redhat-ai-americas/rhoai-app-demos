@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gpu-machineset-aws-g4dn-xlarge
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: gpu-machineset-aws
+    app.kubernetes.io/part-of: rhoai-demos
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/redhat-ai-americas/rhoai-app-demos.git
+    targetRevision: main
+    path: infra/gpu-machineset/aws/helm
+    helm:
+      valueFiles:
+        - values-g4dn-xlarge.yaml
+      parameters:
+        - name: clusterName
+          value: REPLACE_ME  # Set via: oc patch application/gpu-machineset-aws-g4dn-xlarge -n openshift-gitops --type=json -p '[{"op":"replace","path":"/spec/source/helm/parameters/0/value","value":"YOUR_CLUSTER_NAME"}]'
+        - name: region
+          value: REPLACE_ME
+        - name: availabilityZone
+          value: REPLACE_ME
+        - name: infraID
+          value: REPLACE_ME
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openshift-machine-api
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
