@@ -1,0 +1,46 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  annotations:
+    openshift.io/description: 'vLLM Runtime for Qwen3-VL-Embedding-2B multimodal embedding model'
+    openshift.io/display-name: vLLM Runtime - Qwen3-VL-Embedding-2B
+    opendatahub.io/dashboard: 'true'
+    argocd.argoproj.io/sync-wave: "3"
+  name: qwen3-vl-embedding-2b-runtime
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: qwen3-vl-embedding-2b
+    app.kubernetes.io/part-of: rhoai-demos
+    opendatahub.io/dashboard: 'true'
+spec:
+  containers:
+    - args:
+        - '--model'
+        - /mnt/models/
+        - '--port'
+        - '8080'
+        - '--dtype'
+        - auto
+        - '--served-model-name'
+        - qwen3-vl-embedding-2b
+      image: quay.io/modh/vllm@sha256:bf0ed0e02f1d3b87a8097f12beb42d56e8ad67ff8b2f62c31e3815dd8d3766ae
+      name: kserve-container
+      env:
+        - name: HF_HOME
+          value: /tmp/hf_home
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      resources:
+        limits:
+          cpu: '4'
+          memory: 16Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: '2'
+          memory: 8Gi
+          nvidia.com/gpu: '1'
+  multiModel: false
+  supportedModelFormats:
+    - autoSelect: true
+      name: vLLM
