@@ -4,5 +4,9 @@ kind: Kustomization
 namespace: demo
 
 resources:
+  # Shared base resources (namespace, serviceaccount, role)
+  - ../../../base
+  # Job-specific base (configmap, job)
   - ../base
+  # PVC for this variant
   - pvc.yaml
