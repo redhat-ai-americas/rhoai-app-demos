@@ -23,7 +23,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: download
-          image: quay.io/modh/text-generation-inference:rhoai-2.18-74e50e9
+          image: registry.redhat.io/ubi9/python-311:9.7
           imagePullPolicy: IfNotPresent
           command:
             - /bin/bash

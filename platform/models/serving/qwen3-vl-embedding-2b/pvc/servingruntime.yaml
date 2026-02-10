@@ -15,22 +15,45 @@ metadata:
 spec:
   containers:
     - args:
-        - '--model'
-        - /mnt/models/
-        - '--port'
-        - '8080'
-        - '--dtype'
-        - auto
-        - '--served-model-name'
-        - qwen3-vl-embedding-2b
-      image: quay.io/modh/vllm@sha256:bf0ed0e02f1d3b87a8097f12beb42d56e8ad67ff8b2f62c31e3815dd8d3766ae
-      name: kserve-container
+        - '--port=8080'
+        - '--model=/mnt/models'
+        - '--served-model-name={{.Name}}'
+        - '--dtype=auto'
+        - '--max-model-len=32000'
+      command:
+        - python
+        - '-m'
+        - vllm.entrypoints.openai.api_server
       env:
         - name: HF_HOME
           value: /tmp/hf_home
+      image: 'registry.redhat.io/rhaiis/vllm-cuda-rhel9@sha256:ad756c01ec99a99cc7d93401c41b8d92ca96fb1ab7c5262919d818f2be4f3768'
+      name: kserve-container
       ports:
         - containerPort: 8080
           protocol: TCP
+      startupProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        failureThreshold: 80
+        timeoutSeconds: 10
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        periodSeconds: 100
+        timeoutSeconds: 5
+        failureThreshold: 3
       resources:
         limits:
           cpu: '4'

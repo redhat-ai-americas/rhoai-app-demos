@@ -6,8 +6,8 @@ metadata:
     serving.kserve.io/stop: 'true'
     openshift.io/description: 'Qwen3-VL-Embedding-2B compact multimodal embedding model for vision and language tasks'
     openshift.io/display-name: qwen3-vl-embedding-2b
-    opendatahub.io/model-type: embedding
-    # security.opendatahub.io/enable-auth: 'true'
+    security.opendatahub.io/enable-auth: 'true'
+    opendatahub.io/model-type: generative
     argocd.argoproj.io/sync-wave: "5"
   name: qwen3-vl-embedding-2b
   namespace: demo
@@ -38,8 +38,8 @@ spec:
       name: ''
       resources:
         limits:
-          cpu: '4'
-          memory: 16Gi
+          cpu: '3'
+          memory: 12Gi
           nvidia.com/gpu: '1'
         requests:
           cpu: '2'
